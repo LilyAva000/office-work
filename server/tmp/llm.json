@@ -1,0 +1,146 @@
+[
+  {
+    "table_index": 0,
+    "row": 1,
+    "col": 1,
+    "value": "姓名",
+    "left": null,
+    "up": null
+  },
+  {
+    "table_index": 0,
+    "row": 2,
+    "col": 1,
+    "value": "身份证号",
+    "left": null,
+    "up": "姓名"
+  },
+  {
+    "table_index": 0,
+    "row": 3,
+    "col": 1,
+    "value": "性别",
+    "left": null,
+    "up": "身份证号"
+  },
+  {
+    "table_index": 0,
+    "row": 4,
+    "col": 1,
+    "value": "出生日期",
+    "left": null,
+    "up": "性别"
+  },
+  {
+    "table_index": 0,
+    "row": 5,
+    "col": 1,
+    "value": "民族",
+    "left": null,
+    "up": "出生日期"
+  },
+  {
+    "table_index": 0,
+    "row": 6,
+    "col": 1,
+    "value": "婚姻状况",
+    "left": null,
+    "up": "民族"
+  },
+  {
+    "table_index": 0,
+    "row": 7,
+    "col": 1,
+    "value": "政治面貌",
+    "left": null,
+    "up": "婚姻状况"
+  },
+  {
+    "table_index": 0,
+    "row": 8,
+    "col": 1,
+    "value": "户籍所在地",
+    "left": null,
+    "up": "政治面貌"
+  },
+  {
+    "table_index": 0,
+    "row": 9,
+    "col": 1,
+    "value": "现居住地址",
+    "left": null,
+    "up": "户籍所在地"
+  },
+  {
+    "table_index": 0,
+    "row": 10,
+    "col": 1,
+    "value": "联系电话",
+    "left": null,
+    "up": "现居住地址"
+  },
+  {
+    "table_index": 0,
+    "row": 11,
+    "col": 1,
+    "value": "电子邮件",
+    "left": null,
+    "up": "联系电话"
+  },
+  {
+    "table_index": 0,
+    "row": 12,
+    "col": 1,
+    "value": "教育背景",
+    "left": null,
+    "up": "电子邮件"
+  },
+  {
+    "table_index": 0,
+    "row": 13,
+    "col": 4,
+    "value": "持有",
+    "left": "",
+    "up": ""
+  },
+  {
+    "table_index": 0,
+    "row": 13,
+    "col": 5,
+    "value": "无",
+    "left": "持有",
+    "up": ""
+  },
+  {
+    "table_index": 0,
+    "row": 14,
+    "col": 1,
+    "value": "护照号",
+    "left": null,
+    "up": "有无出国（境）证件"
+  },
+  {
+    "table_index": 0,
+    "row": 15,
+    "col": 1,
+    "value": "签证类型",
+    "left": null,
+    "up": "护照号"
+  },
+  {
+    "table_index": 0,
+    "row": 16,
+    "col": 1,
+    "value": "出国（境）时间",
+    "left": null,
+    "up": "签证类型"
+  },
+  {
+    "table_index": 0,
+    "row": 17,
+    "col": 1,
+    "value": "出国（境）目的",
+    "left": null,
+    "up": "出国（境）时间"
+  }
+]

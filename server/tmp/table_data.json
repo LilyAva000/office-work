@@ -1,0 +1,202 @@
+[
+    {
+        "table_index": 0,
+        "row": 0,
+        "col": 1,
+        "value": "张三",
+        "left": "姓名",
+        "up": null
+    },
+    {
+        "table_index": 0,
+        "row": 0,
+        "col": 3,
+        "value": "",
+        "left": "曾用名",
+        "up": null
+    },
+    {
+        "table_index": 0,
+        "row": 0,
+        "col": 6,
+        "value": "1234567890",
+        "left": "身份证号",
+        "up": null
+    },
+    {
+        "table_index": 0,
+        "row": 1,
+        "col": 1,
+        "value": "1990-01-01",
+        "left": "出生年月",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 1,
+        "col": 3,
+        "value": "2016-02-15",
+        "left": "入党\n日期",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 1,
+        "col": 6,
+        "value": "团员",
+        "left": "政治面貌",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 1,
+        "col": 8,
+        "value": "北京",
+        "left": "籍贯",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 2,
+        "col": 1,
+        "value": "本科",
+        "left": "文化程度",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 2,
+        "col": 3,
+        "value": "",
+        "left": "爱好",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 2,
+        "col": 6,
+        "value": "男",
+        "left": "性别",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 2,
+        "col": 8,
+        "value": "汉",
+        "left": "民族",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 3,
+        "col": 1,
+        "value": "北京市朝阳区",
+        "left": "通讯地址",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 3,
+        "col": 9,
+        "value": "13800138000",
+        "left": "手机",
+        "up": "（照片）"
+    },
+    {
+        "table_index": 0,
+        "row": 3,
+        "col": 8,
+        "value": "C:\\Users\\jfw\\Pictures\\img\\loading.png",
+        "left": "",
+        "up": "（照片）"
+    },
+    {
+        "table_index": 0,
+        "row": 4,
+        "col": 1,
+        "value": "2008-2012 就读于XX大学\n2012-2020 就职于XX公司",
+        "left": "个人简历",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 7,
+        "col": 0,
+        "value": "父亲",
+        "left": null,
+        "up": "关系"
+    },
+    {
+        "table_index": 0,
+        "row": 7,
+        "col": 1,
+        "value": "张爸",
+        "left": "",
+        "up": "姓名"
+    },
+    {
+        "table_index": 0,
+        "row": 7,
+        "col": 2,
+        "value": "1111111111",
+        "left": "",
+        "up": "身份证号"
+    },
+    {
+        "table_index": 0,
+        "row": 7,
+        "col": 8,
+        "value": "某公司",
+        "left": "",
+        "up": "工作单位"
+    },
+    {
+        "table_index": 0,
+        "row": 8,
+        "col": 0,
+        "value": "母亲",
+        "left": null,
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 8,
+        "col": 1,
+        "value": "李妈",
+        "left": "",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 8,
+        "col": 2,
+        "value": "2222222222",
+        "left": "",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 8,
+        "col": 8,
+        "value": "某单位",
+        "left": "",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 13,
+        "col": 1,
+        "value": "无",
+        "left": "有无出国（境）证件",
+        "up": ""
+    },
+    {
+        "table_index": 0,
+        "row": 13,
+        "col": 6,
+        "value": "无",
+        "left": "出国（境）情况",
+        "up": ""
+    }
+]
