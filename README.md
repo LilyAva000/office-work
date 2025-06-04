@@ -14,8 +14,8 @@ TODO
 **用法示例：**
 ```bash
 cd server
-uv venv .venv --python=3.10
-.\venv\Scripts\activate
+uv venv .venv --python=3.11
+.venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
 </details>
@@ -27,7 +27,7 @@ uv pip install -r requirements.txt
 **用法示例：**
 ```bash
 cd server
-uv venv .venv --python=3.10
+uv venv .venv --python=3.11
 source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
