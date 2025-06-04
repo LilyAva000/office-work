@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { userStore, apiClient } from '@/lib/store';
+import React, { useRef } from 'react';
 
 interface ProfileFormProps {
   initialData: any;
@@ -21,6 +22,11 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  // 头像上传相关
+  const [avatarHover, setAvatarHover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // 处理表单字段变更
   const handleChange = (section: string, subsection: string | null, field: string, value: string) => {
@@ -139,10 +145,42 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     }
   };
 
+  // 头像上传处理（加avatarKey，避免文件新旧头像重名而不刷新显示）
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const username = localStorage.getItem('username') || formData.基本信息.个人信息.姓名;
+      if (!username) throw new Error('用户名不存在');
+      const result = await apiClient.uploadAvatar(username, file);
+      if (result.status === 200 && result.avatar) {
+        // 只更新照片字段
+        setFormData((prev: any) => ({
+          ...prev,
+          avatarKey: Date.now(),
+          基本信息: {
+            ...prev.基本信息,
+            个人信息: {
+              ...prev.基本信息.个人信息,
+              照片: result.avatar,
+            },
+          },
+        }));
+        toast({ title: '头像上传成功', description: '头像已更新' });
+      } else {
+        toast({ variant: 'destructive', title: '头像上传失败', description: result.detail || '头像上传失败' });
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: '头像上传失败', description: error.message || '请稍后重试' });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   // 渲染基本信息表单
   const renderBasicInfoForm = () => {
     const { 个人信息, 工作信息 } = formData.基本信息;
-    
     return (
       <div className="space-y-6">
         <Tabs defaultValue="个人信息" className="w-full">
@@ -150,19 +188,42 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             <TabsTrigger value="个人信息">个人信息</TabsTrigger>
             <TabsTrigger value="工作信息">工作信息</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="个人信息" className="space-y-4 pt-4">
             <div className="flex justify-center mb-6">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={个人信息.照片 ? (个人信息.照片.startsWith('http') ? 个人信息.照片 : `${apiClient.BASE_URL}${个人信息.照片.replace(/^\/*/, '')}`) : "/img/loading.svg"} />
-                <AvatarFallback>{个人信息.姓名?.slice(0, 2) || "用户"}</AvatarFallback>
-              </Avatar>
+              <div
+                className="relative group w-24 h-24"
+                onMouseEnter={() => setAvatarHover(true)}
+                onMouseLeave={() => setAvatarHover(false)}
+              >
+                <Avatar className="w-24 h-24 cursor-pointer">
+                  <AvatarImage key={formData.avatarKey || ''} src={个人信息.照片 ? (个人信息.照片.startsWith('http') ? 个人信息.照片 : `${apiClient.BASE_URL}/${个人信息.照片.replace(/^[\/]+/, '')}`) : "/img/loading.svg"} />
+                  <AvatarFallback>{个人信息.姓名?.slice(0, 2) || "用户照片"}</AvatarFallback>
+                </Avatar>
+                {/* 上传按钮覆盖层 */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  disabled={avatarUploading}
+                />
+                {avatarHover && (
+                  <button
+                    type="button"
+                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white text-sm rounded-full transition-opacity"
+                    style={{ zIndex: 10 }}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={avatarUploading}
+                  >
+                    {avatarUploading ? '上传中...' : '更换头像'}
+                  </button>
+                )}
+              </div>
             </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(个人信息).map(([field, value]) => {
                 if (field === '照片') return null;
-                
                 return (
                   <div key={field} className="space-y-2">
                     <Label htmlFor={`personal-${field}`}>{field}</Label>
