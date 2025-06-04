@@ -1,0 +1,24 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="100" fill="#f0f0f0"/>
+  
+  <!-- 人物轮廓 -->
+  <circle cx="100" cy="80" r="40" fill="#d0d0d0"/>
+  <path d="M100 130 Q 60 130 50 180 L 150 180 Q 140 130 100 130 Z" fill="#d0d0d0"/>
+  
+  <!-- 加载动画 -->
+  <g>
+    <animateTransform 
+      attributeName="transform" 
+      attributeType="XML" 
+      type="rotate"
+      from="0 100 100" 
+      to="360 100 100" 
+      dur="2s" 
+      repeatCount="indefinite"/>
+    <circle cx="100" cy="30" r="10" fill="#a0a0a0"/>
+  </g>
+  
+  <!-- 文字 -->
+  <text x="100" y="190" font-family="Arial" font-size="14" text-anchor="middle" fill="#808080">加载中...</text>
+</svg>
