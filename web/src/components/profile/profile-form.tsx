@@ -154,7 +154,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           <TabsContent value="个人信息" className="space-y-4 pt-4">
             <div className="flex justify-center mb-6">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={个人信息.照片 || "/img/loading.svg"} />
+                <AvatarImage src={个人信息.照片 ? (个人信息.照片.startsWith('http') ? 个人信息.照片 : `${apiClient.BASE_URL}${个人信息.照片.replace(/^\/*/, '')}`) : "/img/loading.svg"} />
                 <AvatarFallback>{个人信息.姓名?.slice(0, 2) || "用户"}</AvatarFallback>
               </Avatar>
             </div>

@@ -46,10 +46,14 @@ export const userStore = {
   }
 };
 
+// 注意！！路径中/的拼接，多余的/会导致请求失败
+const BASE_URL = 'http://127.0.0.1:8008/';
+const API_BASE_URL = BASE_URL + 'api';
+
 // API请求工具
 export const apiClient = {
-  // API基础URL
-  API_BASE_URL: 'http://127.0.0.1:8008/api',
+  BASE_URL,
+  API_BASE_URL,
   
   // 登录方法
   login: async (username: string, password: string): Promise<any> => {
