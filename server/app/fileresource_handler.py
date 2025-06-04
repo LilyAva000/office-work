@@ -8,10 +8,31 @@ router = APIRouter()
 # def upload_file(file: UploadFile = File(...)):
 #     return {"filename": file.filename, "message": "File uploaded successfully"}
 
+import os.path
+from fastapi.responses import FileResponse
+
 # 文件下载接口
 @router.get("/download/{file_name}")
 def download_file(file_name: str):
-    return {"file_name": file_name, "message": "This is a placeholder for file download functionality."}
+    try:
+        file_path = os.path.join("templates", "empty", file_name)
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=404,
+                detail=f"文件 {file_name} 不存在"
+            )
+        return FileResponse(
+            path=file_path,
+            filename=file_name,
+            media_type="application/octet-stream"
+        )
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(
+            status_code=500,
+            detail=f"下载文件时发生错误：{str(e)}"
+        )
 
 # 获取文件模板列表接口
 @router.get("/list_empty")
