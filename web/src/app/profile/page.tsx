@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 import ProfileForm from '@/components/profile/profile-form';
+import { userStore } from '@/lib/store';
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -12,27 +15,52 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
+    // 检查用户是否已登录
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      // 如果未登录，重定向到登录页面
+      toast({
+        variant: 'destructive',
+        title: '未登录',
+        description: '请先登录后再访问个人资料页面',
+      });
+      router.push('/login');
+      return;
+    }
+
     const fetchProfileData = async () => {
       try {
         setIsLoading(true);
         
-        // 尝试从本地存储获取数据
-        const savedData = localStorage.getItem('profileData');
+        // 从全局状态获取用户信息
+        const userInfo = userStore.getUserInfo();
         
-        if (savedData) {
-          setProfileData(JSON.parse(savedData));
+        if (userInfo && userInfo.info) {
+          // 如果有用户信息，使用API返回的info数据
+          setProfileData(userInfo.info);
+          console.log('从全局状态加载用户信息:', userInfo);
         } else {
-          // 如果本地存储没有数据，则加载模板数据
-          const response = await fetch('/form-template.json');
+          // 尝试从本地存储获取数据（作为备用）
+          const savedData = localStorage.getItem('profileData');
           
-          if (!response.ok) {
-            throw new Error('无法加载个人资料模板');
+          if (savedData) {
+            setProfileData(JSON.parse(savedData));
+            console.log('从本地存储加载用户信息： ', JSON.parse(savedData));
+          } else {
+            // 如果本地存储没有数据，则加载模板数据
+            const response = await fetch('/form-template.json');
+            
+            if (!response.ok) {
+              throw new Error('无法加载个人资料模板');
+            }
+            
+            const templateData = await response.json();
+            setProfileData(templateData);
+            console.log('从模板加载用户信息: ', templateData);
           }
-          
-          const templateData = await response.json();
-          setProfileData(templateData);
         }
       } catch (err) {
         console.error('加载个人资料失败:', err);
@@ -49,7 +77,17 @@ export default function ProfilePage() {
     };
 
     fetchProfileData();
-  }, [toast]);
+
+    // 订阅用户信息变化，当用户信息更新时重新加载
+    const unsubscribe = userStore.subscribe(() => {
+      fetchProfileData();
+    });
+
+    // 组件卸载时取消订阅
+    return () => {
+      unsubscribe();
+    };
+  }, [toast, router]);
 
   // 渲染加载状态
   if (isLoading) {

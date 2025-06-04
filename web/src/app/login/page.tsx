@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { apiClient, userStore } from '@/lib/store';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -16,35 +17,64 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // 模拟登录验证
+  // 在页面加载时清除全局状态
+  useEffect(() => {
+    // 清除用户信息
+    userStore.clearUserInfo();
+    // 清除登录状态
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    
+    console.log('已清除登录状态和用户信息');
+  }, []);
+
+  // 处理登录
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // 模拟网络请求延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 简单的验证逻辑，实际项目中应该调用API
-    if (username === 'admin' && password === 'password') {
-      toast({
-        title: '登录成功',
-        description: '欢迎回来，正在跳转到个人档案页面...',
-      });
+    try {
+      // 调用登录API
+      const loginResponse = await apiClient.login(username, password);
       
-      // 存储登录状态
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('username', username);
-      
-      // 跳转到个人档案页面
-      setTimeout(() => {
-        router.push('/profile');
-      }, 1000);
-    } else {
+      // 验证登录状态
+      if (loginResponse && loginResponse.status === 200) {
+        // 获取用户信息
+        const userInfo = await apiClient.getUserInfo(username);
+        
+        console.log('用户信息:', userInfo); // 打印用户信息以确认是否正确获取
+        // 确保userInfo包含必要的数据
+        if (!userInfo || !userInfo.info) {
+          throw new Error('获取用户信息失败，请重试');
+        }
+        
+        // 存储用户信息到全局状态
+        userStore.setUserInfo(userInfo);
+        
+        // 存储登录状态
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('username', username);
+        
+        toast({
+          title: '登录成功',
+          description: `欢迎回来，${username}，正在跳转到个人档案页面...`,
+        });
+        
+        // 跳转到个人档案页面
+        setTimeout(() => {
+          router.push('/profile');
+        }, 1000);
+      } else {
+        throw new Error('登录失败: 用户名或密码错误');
+      }
+    } catch (error) {
+      console.error('登录失败:', error);
       toast({
         variant: 'destructive',
         title: '登录失败',
         description: '用户名或密码错误，请重试。',
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -97,7 +127,7 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter>
               <p className="text-xs text-center w-full text-muted-foreground">
-                提示：用户名 admin，密码 password
+                提示：用户名 lisi，密码 password
               </p>
             </CardFooter>
           </Card>

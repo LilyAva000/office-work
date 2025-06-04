@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { userStore, apiClient } from '@/lib/store';
 
 interface ProfileFormProps {
   initialData: any;
@@ -58,10 +59,25 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   // 添加数组项
   const handleAddArrayItem = (section: string, template: any) => {
-    setFormData({
-      ...formData,
-      [section]: [...formData[section], { ...template }]
-    });
+    // 特殊处理考核字段，因为它是对象而不是数组
+    if (section === '考核') {
+      const currentYear = new Date().getFullYear().toString();
+      const newYear = template.年份 || currentYear;
+      
+      setFormData({
+        ...formData,
+        [section]: {
+          ...formData[section],
+          [newYear]: template.结果 || '合格'
+        }
+      });
+    } else {
+      // 处理普通数组字段
+      setFormData({
+        ...formData,
+        [section]: [...formData[section], { ...template }]
+      });
+    }
   };
 
   // 删除数组项
@@ -79,19 +95,48 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const handleSave = async () => {
     setIsSaving(true);
     
-    // 模拟API保存请求
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 在实际项目中，这里应该调用API保存数据
-    localStorage.setItem('profileData', JSON.stringify(formData));
-    
-    setIsSaving(false);
-    setIsEditing(false);
-    
-    toast({
-      title: '保存成功',
-      description: '个人资料已更新',
-    });
+    try {
+      // 获取当前用户信息
+      const userInfo = userStore.getUserInfo();
+      
+      if (!userInfo || !userInfo.person_id) {
+        throw new Error('用户信息不存在，请重新登录');
+      }
+      
+      // 准备更新的数据
+      const updatedUserInfo = formData
+      console.log("更新的数据formData: ", formData)
+      
+      // 调用API更新数据
+      const username = localStorage.getItem('username');
+      if (!username) {
+        throw new Error('用户名不存在，请重新登录');
+      }
+      
+      // 使用apiClient更新用户信息
+      await apiClient.updateUserInfo(username, updatedUserInfo);
+      
+      // 更新本地存储
+      localStorage.setItem('profileData', JSON.stringify(formData));
+      
+      // 更新全局状态
+      userStore.setUserInfo(updatedUserInfo);
+      
+      toast({
+        title: '保存成功',
+        description: '个人资料已更新',
+      });
+    } catch (error) {
+      console.error('保存失败:', error);
+      toast({
+        variant: 'destructive',
+        title: '保存失败',
+        description: error instanceof Error ? error.message : '无法保存个人资料，请稍后重试',
+      });
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+    }
   };
 
   // 渲染基本信息表单
@@ -109,7 +154,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           <TabsContent value="个人信息" className="space-y-4 pt-4">
             <div className="flex justify-center mb-6">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={个人信息.照片 || "https://placekitten.com/200/200"} />
+                <AvatarImage src={个人信息.照片 || "/img/loading.svg"} />
                 <AvatarFallback>{个人信息.姓名?.slice(0, 2) || "用户"}</AvatarFallback>
               </Avatar>
             </div>
@@ -203,29 +248,13 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               
               <div className="space-y-2">
                 <Label htmlFor={`resume-${index}-type`}>类型</Label>
-                {isEditing ? (
-                  <Select 
-                    value={item.类型} 
-                    onValueChange={(value) => handleArrayChange('个人简历', index, '类型', value)}
-                  >
-                    <SelectTrigger id={`resume-${index}-type`}>
-                      <SelectValue placeholder="选择类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="教育">教育</SelectItem>
-                      <SelectItem value="任职">任职</SelectItem>
-                      <SelectItem value="培训">培训</SelectItem>
-                      <SelectItem value="其他">其他</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    id={`resume-${index}-type`}
-                    value={item.类型}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                )}
+                <Input
+                  id={`resume-${index}-type`}
+                  value={item.类型}
+                  onChange={(e) => handleArrayChange('个人简历', index, '类型', e.target.value)}
+                  disabled={!isEditing}
+                  className={!isEditing ? 'bg-gray-50' : ''}
+                />
               </div>
               
               <div className="space-y-2 md:col-span-2">
@@ -249,43 +278,82 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const renderEvaluationForm = () => {
     return (
       <div className="space-y-6">
-        <h3 className="text-lg font-medium">考核情况</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Object.entries(formData.考核).map(([year, result]) => (
-            <div key={year} className="space-y-2">
-              <Label htmlFor={`eval-${year}`}>{year}年度考核</Label>
-              {isEditing ? (
-                <Select 
-                  value={result as string} 
-                  onValueChange={(value) => handleChange('考核', null, year, value)}
-                >
-                  <SelectTrigger id={`eval-${year}`}>
-                    <SelectValue placeholder="选择考核结果" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="优秀">优秀</SelectItem>
-                    <SelectItem value="良好">良好</SelectItem>
-                    <SelectItem value="合格">合格</SelectItem>
-                    <SelectItem value="不合格">不合格</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  id={`eval-${year}`}
-                  value={result as string}
-                  disabled
-                  className="bg-gray-50"
-                />
-              )}
-            </div>
-          ))}
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium">考核情况</h3>
+          {isEditing && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleAddArrayItem('考核', { 年份: '', 结果: '' })}
+            >
+              添加考核
+            </Button>
+          )}
         </div>
+        
+        {Object.entries(formData.考核 || {}).map(([year, result]: [string, any]) => (
+          <motion.div 
+            key={year}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="p-4 border rounded-md relative"
+          >
+            {isEditing && (
+              <button
+                onClick={() => {
+                  const updatedKaohe = { ...formData.考核 };
+                  delete updatedKaohe[year];
+                  setFormData({ ...formData, 考核: updatedKaohe });
+                }}
+                className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+              >
+                ✕
+              </button>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor={`evaluation-${year}-year`}>年份</Label>
+                <Input
+                  id={`evaluation-${year}-year`}
+                  value={year}
+                  onChange={(e) => {
+                    if (isEditing) {
+                      const updatedKaohe = { ...formData.考核 };
+                      const currentResult = updatedKaohe[year];
+                      delete updatedKaohe[year];
+                      updatedKaohe[e.target.value] = currentResult;
+                      setFormData({ ...formData, 考核: updatedKaohe });
+                    }
+                  }}
+                  disabled={!isEditing}
+                  className={!isEditing ? 'bg-gray-50' : ''}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor={`evaluation-${year}-result`}>结果</Label>
+                <Input
+                  id={`evaluation-${year}-result`}
+                  value={result}
+                  onChange={(e) => {
+                    const updatedKaohe = { ...formData.考核 };
+                    updatedKaohe[year] = e.target.value;
+                    setFormData({ ...formData, 考核: updatedKaohe });
+                  }}
+                  disabled={!isEditing}
+                  className={!isEditing ? 'bg-gray-50' : ''}
+                />
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
     );
   };
 
-  // 渲染奖惩情况表单
+  // 渲染奖惩表单
   const renderRewardsForm = () => {
     return (
       <div className="space-y-6">
@@ -297,7 +365,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               size="sm"
               onClick={() => handleAddArrayItem('奖惩情况', { 奖惩时间: '', 奖惩名称: '', 奖惩单位: '', 奖惩原因: '' })}
             >
-              添加奖惩
+              添加记录
             </Button>
           )}
         </div>
@@ -343,9 +411,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor={`reward-${index}-org`}>奖惩单位</Label>
+                <Label htmlFor={`reward-${index}-unit`}>奖惩单位</Label>
                 <Input
-                  id={`reward-${index}-org`}
+                  id={`reward-${index}-unit`}
                   value={item.奖惩单位}
                   onChange={(e) => handleArrayChange('奖惩情况', index, '奖惩单位', e.target.value)}
                   disabled={!isEditing}
@@ -375,14 +443,21 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">家庭情况</h3>
+          <h3 className="text-lg font-medium">家庭成员</h3>
           {isEditing && (
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => handleAddArrayItem('家庭情况', { 称谓: '', 姓名: '', 年龄: '', 身份证号: '', 政治面貌: '', 工作单位及职务: '' })}
+              onClick={() => handleAddArrayItem('家庭情况', { 
+                称谓: '', 
+                姓名: '', 
+                年龄: '', 
+                身份证号: '',
+                政治面貌: '',
+                工作单位及职务: ''
+              })}
             >
-              添加家庭成员
+              添加成员
             </Button>
           )}
         </div>
