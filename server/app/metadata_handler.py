@@ -23,8 +23,8 @@ def get_info(person_id: str):
 def create_info(id:str,person: dict):
     try:
         person_data_path = f"data/persons/{id}.json"
-        with open(person_data_path, "w") as file:
-            json.dump(person, file)
+        with open(person_data_path, "w", encoding="utf-8") as file:
+            json.dump(person, file, ensure_ascii=False)
         item = {"id": id, "info": person}
         return {
             "status": 200,
@@ -38,9 +38,10 @@ def create_info(id:str,person: dict):
 @router.put("/info/{person_id}")
 def update_info(person_id: str, person_info: dict):
     try:
+        new_person_info = person_info['person_info']
         person_data_path = f"data/persons/{person_id}.json"
-        with open(person_data_path, "w") as file:
-            json.dump(person_info, file)
+        with open(person_data_path, "w", encoding="utf-8") as file:
+            json.dump(new_person_info, file, ensure_ascii=False)
         return {
             "status": 200,
             "message": "修改成功",
