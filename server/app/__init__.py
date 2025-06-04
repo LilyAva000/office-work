@@ -24,4 +24,4 @@ app.include_router(file_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 暴露 data/imgs 目录
-app.mount("data/imgs", StaticFiles(directory="data/imgs"), name="imgs")
+app.mount("/data/imgs", StaticFiles(directory="data/imgs"), name="imgs")

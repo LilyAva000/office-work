@@ -5,3 +5,4 @@ pandas>=2.2.3
 requests>=2.32.3
 fastapi>=0.103.0
 uvicorn>=0.29.0
+python-multipart>=0.0.20
