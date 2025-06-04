@@ -3,11 +3,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from starlette.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware  # 导入CORS中间件
 from .metadata_handler import router as metadata_router
 from .fileresource_handler import router as file_router
 
 # 创建 FastAPI 实例，禁用默认的docs端点
 app = FastAPI(docs_url=None, redoc_url=None)
+
+# 配置CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许的前端源
+    allow_credentials=True,
+    allow_methods=["*"],  # 允许所有HTTP方法
+    allow_headers=["*"],  # 允许所有HTTP头
+)
 
 # 示例接口：根路径
 @app.get("/")
