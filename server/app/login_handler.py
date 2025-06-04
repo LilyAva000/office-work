@@ -16,7 +16,7 @@ def login(request: LoginRequest):
             
         if request.username in valid_users and valid_users[request.username] == request.password:
             return {
-                "status": "success",
+                "status": 200,
                 "message": "登录成功",
                 "data": {"username": request.username}
             }

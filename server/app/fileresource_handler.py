@@ -18,7 +18,11 @@ def download_file(file_name: str):
 def get_empty():
     try:
         emptys = os.listdir("templates/empty")
-        return {"message": "获取空模板列表成功", "data": emptys}
+        return {
+            "status": 200,
+            "message": "查询文件模板成功",
+            "data": emptys
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -32,6 +36,10 @@ def get_templates():
             "word_templates": word_templates,
             "excel_templates": excel_templates
         }   
-        return {"message": "获取模板列表成功", "data": result}
+        return {
+            "status": 200,
+            "message": "查询文件模板成功",
+            "data": result
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

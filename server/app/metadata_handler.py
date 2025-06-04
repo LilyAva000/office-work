@@ -10,7 +10,11 @@ def get_info(person_id: str):
     try:
         with open(person_data_path, "r") as file:
             person_info = json.load(file)
-        return {"person_id": person_id, "info": person_info}
+        return {
+            "status": 200,
+            "message": "查询成功",
+            "data": {"person_id": person_id, "info": person_info}
+        }
     except Exception as e:
         raise HTTPException(status_code=404, detail="Person not found")
 
@@ -22,18 +26,26 @@ def create_info(id:str,person: dict):
         with open(person_data_path, "w") as file:
             json.dump(person, file)
         item = {"id": id, "info": person}
-        return {"message": "Person created successfully", "item": item}
+        return {
+            "status": 200,
+            "message": "创建成功",
+            "data": {}
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # 示例接口：更新基本信息
-@router.put("/info/{item_id}")
-def update_info(item_id: int, item: dict):
+@router.put("/info/{person_id}")
+def update_info(person_id: str, person_info: dict):
     try:
-        person_data_path = f"data/persons/{item_id}.json"
+        person_data_path = f"data/persons/{person_id}.json"
         with open(person_data_path, "w") as file:
-            json.dump(item, file)
-        return {"message": "Item updated successfully", "item_id": item_id, "item": item}
+            json.dump(person_info, file)
+        return {
+            "status": 200,
+            "message": "修改成功",
+            "data": {"person_id": person_id, "updated_info": person_info}
+        }
     except Exception as e:
         raise HTTPException(status_code=404, detail="Person not found")
     
