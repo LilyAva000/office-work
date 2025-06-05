@@ -4,10 +4,9 @@ import zipfile
 from typing import List
 from datetime import datetime
 from pydantic import BaseModel
-from docx.shared import Mm
-from docxtpl import DocxTemplate, InlineImage
-from lib.xlsx_auto import ExcelTemplateFiller
 from fastapi import APIRouter, HTTPException
+from lib.xlsx_auto import ExcelTemplateFiller
+from lib.docx_auto import DocxTemplateFiller
 from loguru import logger
 
 router = APIRouter()
@@ -46,30 +45,21 @@ def auto_filling(request: AutoFillingRequest):
             try:
                 # 读取个人数据
                 person_data_path = f"data/persons/{person_id}.json"
-                with open(person_data_path, "r") as f:
+                with open(person_data_path, "r", encoding="utf-8") as f:
                     person_data = json.load(f)
                 
                 # 构建输出文件名
                 output_filename = f"{request.table_name.split('.')[0]}-{person_id}.{template_end}"
-                output_path = os.path.join("output", output_filename)
+                output_path = os.path.join("static/output", output_filename)
                 
                 # 根据文件类型选择处理器
                 if request.table_name.startswith("excel"):
                     filler = ExcelTemplateFiller(template_path, output_path)
-                    filler.fill(person_data)
-                    filler.save()
                 else:
-                    doc = DocxTemplate(template_path)
-                    logger.info(f"person_data: {person_data}")
-                    img_url = person_data['基本信息']['个人信息']['照片']
-                    img_url = os.path.join("server", img_url)
-                    logger.info(f"照片URL: {img_url}")
-                    try:
-                        person_data['照片'] = InlineImage(doc, img_url, height=Mm(35))
-                    except:
-                        None
-                    doc.render(person_data)
-                    doc.save(output_path)
+                    filler = DocxTemplateFiller(template_path, output_path)
+                    
+                filler.fill(person_data)
+                filler.save()
                 
                 results.append(output_path)
             except Exception as e:
