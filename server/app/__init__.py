@@ -38,6 +38,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 暴露 data/imgs 目录
 app.mount("/data/imgs", StaticFiles(directory="data/imgs"), name="imgs")
 
+# 暴露 output目录
+app.mount("/output", StaticFiles(directory="output"), name="output")
+
+
 # 自定义 Swagger UI 路由
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
