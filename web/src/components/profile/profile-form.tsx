@@ -146,9 +146,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     if (!file) return;
     setAvatarUploading(true);
     try {
-      const username = localStorage.getItem('username') || formData.基本信息.个人信息.姓名;
-      if (!username) throw new Error('用户名不存在');
-      const result = await apiClient.uploadAvatar(username, file);
+      const personId = localStorage.getItem('person_id');
+      if (!personId) throw new Error('上传头像用户person_id不存在');
+      const result = await apiClient.uploadAvatar(personId, file);
       if (result.status === 200 && result.avatar) {
         // 只更新照片字段
         setFormData((prev: any) => ({
@@ -192,7 +192,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               >
                 <Avatar className="w-24 h-24 cursor-pointer">
                   <AvatarImage key={formData.avatarKey || ''} src={个人信息.照片 ? (个人信息.照片.startsWith('http') ? 个人信息.照片 : `${apiClient.BASE_URL}/${个人信息.照片.replace(/^[\/]+/, '')}`) : "/img/loading.svg"} />
-                  <AvatarFallback>{个人信息.姓名?.slice(0, 2) || "用户照片"}</AvatarFallback>
+                  <AvatarFallback>{"上传照片"}</AvatarFallback>
                 </Avatar>
                 {/* 上传按钮覆盖层 */}
                 <input

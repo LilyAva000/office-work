@@ -22,8 +22,10 @@ export default function ProfileLayout({
     setIsClient(true);
     // 检查登录状态
     const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const storedUsername = localStorage.getItem('username');
-    
+    const storedUserInfo = localStorage.getItem('userInfo');
+    // const storedUsername = storedUserInfo ? JSON.parse(storedUserInfo)['基本信息']['个人信息']['姓名'] : '';
+    // TODO 此处待考量，persion_id尽量不要和username 划等号！！
+    const storedUsername = localStorage.getItem('person_id')
     if (!isLoggedIn) {
       toast({
         variant: 'destructive',
