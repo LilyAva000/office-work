@@ -12,13 +12,14 @@ router = APIRouter()
 #     return {"filename": file.filename, "message": "File uploaded successfully"}
 
 import os.path
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 # 文件下载接口
 @router.get("/download/{file_name}")
 def download_file(file_name: str):
     try:
-        file_path = os.path.join("templates", "empty", file_name)
+        # TODO 改为下载已填好的表，需修改代码
+        file_path = os.path.join("templates", "preview", file_name)
         if not os.path.exists(file_path):
             raise HTTPException(
                 status_code=404,
@@ -37,8 +38,37 @@ def download_file(file_name: str):
             detail=f"下载文件时发生错误：{str(e)}"
         )
 
+# 预览文件接口
+@router.get("/preview/{file_name}")
+def preview_file(file_name: str):
+    try:
+        file_path = os.path.join("templates", "preview", file_name)
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=404,
+                detail=f"文件 {file_name} 不存在"
+            )
+
+        return FileResponse(
+            path=file_path,
+            filename=file_name,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'inline; filename="{file_name}"',
+                "X-Content-Type-Options": "nosniff",  # 防止猜测 MIME
+                "X-Download-Options": "noopen",       # 防止触发下载
+            }
+        )
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(
+            status_code=500,
+            detail=f"预览文件时发生错误：{str(e)}"
+        )
+
 # 获取文件模板列表接口
-@router.get("/list_empty")
+@router.get("/list_tables")
 def get_empty():
     try:
         emptys = os.listdir("templates/empty")

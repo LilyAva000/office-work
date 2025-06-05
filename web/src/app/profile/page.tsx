@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import ProfileForm from '@/components/profile/profile-form';
+import TableManager from '@/components/tables/table-manager';
 import { userStore } from '@/lib/store';
 
 export default function ProfilePage() {
@@ -18,49 +19,53 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // 检查用户是否已登录
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
-      // 如果未登录，重定向到登录页面
-      toast({
-        variant: 'destructive',
-        title: '未登录',
-        description: '请先登录后再访问个人资料页面',
-      });
-      router.push('/login');
-      return;
-    }
-
     const fetchProfileData = async () => {
       try {
         setIsLoading(true);
         
-        // 从全局状态获取用户信息
-        const userInfo = userStore.getUserInfo();
+        // 检查登录状态
+        const loginStatus = localStorage.getItem('isLoggedIn');
+        console.log('当前登录状态:', loginStatus);
+        if (loginStatus !== 'true') {
+          toast({
+            title: '未登录',
+            description: '请先登录后再访问个人资料页面',
+            variant: 'destructive',
+          });
+          router.push('/login');
+          return;
+        }
         
-        if (userInfo && userInfo.info) {
-          // 如果有用户信息，使用API返回的info数据
-          setProfileData(userInfo.info);
-          console.log('从全局状态加载用户信息:', userInfo);
-        } else {
-          // 尝试从本地存储获取数据（作为备用）
-          const savedData = localStorage.getItem('profileData');
-          
-          if (savedData) {
-            setProfileData(JSON.parse(savedData));
-            console.log('从本地存储加载用户信息： ', JSON.parse(savedData));
-          } else {
-            // 如果本地存储没有数据，则加载模板数据
-            const response = await fetch('/form-template.json');
-            
-            if (!response.ok) {
-              throw new Error('无法加载个人资料模板');
-            }
-            
-            const templateData = await response.json();
-            setProfileData(templateData);
-            console.log('从模板加载用户信息: ', templateData);
+        // 首先尝试从全局状态获取
+        let userInfo = userStore.getUserInfo();
+        
+        if (userInfo) {
+          console.log('从全局状态加载用户信息');
+          setProfileData(userInfo);
+          return;
+        }
+        
+        // 然后尝试从localStorage获取
+        const storedUserInfo = localStorage.getItem('userInfo');
+        if (storedUserInfo) {
+          try {
+            userInfo = JSON.parse(storedUserInfo);
+            console.log('从localStorage加载用户信息');
+            setProfileData(userInfo);
+            return;
+          } catch (parseError) {
+            console.error('解析localStorage中的用户信息失败:', parseError);
           }
+        }
+        
+        // 最后加载模板数据
+        console.log('加载模板数据');
+        const response = await fetch('/form-template.json');
+        if (response.ok) {
+          const templateData = await response.json();
+          setProfileData(templateData);
+        } else {
+          throw new Error('无法加载模板数据');
         }
       } catch (err) {
         console.error('加载个人资料失败:', err);
@@ -77,34 +82,26 @@ export default function ProfilePage() {
     };
 
     fetchProfileData();
+  }, [router, toast]);
 
-    // 订阅用户信息变化，当用户信息更新时重新加载
-    const unsubscribe = userStore.subscribe(() => {
-      fetchProfileData();
-    });
 
-    // 组件卸载时取消订阅
-    return () => {
-      unsubscribe();
-    };
-  }, [toast, router]);
+
 
   // 渲染加载状态
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-700 border-l-blue-500 border-r-blue-700 rounded-full animate-spin"></div>
-          <p className="text-lg font-medium">加载个人资料中...</p>
+          <p className="text-lg font-medium">加载中...</p>
         </div>
       </div>
     );
   }
 
-  // 渲染错误状态
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow-md flex flex-col items-center space-y-4">
           <div className="w-16 h-16 flex items-center justify-center rounded-full bg-red-100 text-red-500">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-10 h-10">
@@ -125,38 +122,40 @@ export default function ProfilePage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto py-6 px-4 sm:px-6"
+      className="container mx-auto px-4 py-8 max-w-6xl"
     >
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">个人中心</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            管理您的个人信息和文档
+          </p>
+        </div>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8">
           <TabsTrigger value="profile" className="text-lg py-3">
             个人资料
           </TabsTrigger>
-          <TabsTrigger value="documents" className="text-lg py-3">
+          <TabsTrigger value="tables" className="text-lg py-3">
             表格管理
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="profile" className="mt-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            {profileData && <ProfileForm initialData={profileData} />}
-          </div>
+        <TabsContent value="profile" className="space-y-6">
+          {profileData && (
+            <ProfileForm 
+              initialData={profileData} 
+            />
+          )}
         </TabsContent>
         
-        <TabsContent value="documents" className="mt-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
-              <h3 className="text-2xl font-bold mb-4">表格管理功能</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                此功能正在开发中，敬请期待...
-              </p>
-              <div className="w-16 h-16 border-4 border-t-blue-500 border-b-blue-300 border-l-blue-500 border-r-blue-300 rounded-full animate-spin mb-4"></div>
-              <p className="text-sm text-gray-400">预计将支持预览和下载 Word 和 Excel 文件</p>
-            </div>
-          </div>
+        <TabsContent value="tables" className="space-y-6">
+          <TableManager />
         </TabsContent>
       </Tabs>
     </motion.div>
