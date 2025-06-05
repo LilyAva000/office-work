@@ -115,7 +115,7 @@ export default function TableManager({ className }: TableManagerProps) {
       {/* 左侧文件列表 */}
       <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 pr-4">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">文件列表</h3>
+          <h3 className="text-lg font-semibold mb-2">支持的表格</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             共 {files.length} 个文件
           </p>
@@ -156,12 +156,7 @@ export default function TableManager({ className }: TableManagerProps) {
       {/* 右侧预览区域 */}
       <div className="flex-1 pl-4">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">文件预览</h3>
-          {selectedFile && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              正在预览: {selectedFile}
-            </p>
-          )}
+          <h3 className="text-lg font-semibold mb-2">表格预览</h3>
         </div>
 
         {selectedFile ? (
@@ -173,11 +168,11 @@ export default function TableManager({ className }: TableManagerProps) {
             className="h-full min-h-[60vh] border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800"
           >
             <iframe
-              src={apiClient.getFileDownloadUrl(selectedFile)}
+              src={apiClient.getFilePreviewUrl(selectedFile)}
               className="w-full h-full min-h-[60vh]"
               title={`预览 ${selectedFile}`}
               onError={(e) => {
-                console.error('文件预览失败:', e);
+                console.error('表格预览失败:', e);
                 toast({
                   title: '预览失败',
                   description: `无法预览文件 ${selectedFile}`,
@@ -187,7 +182,7 @@ export default function TableManager({ className }: TableManagerProps) {
             >
               您的浏览器不支持iframe预览，请
               <a 
-                href={apiClient.getFileDownloadUrl(selectedFile)} 
+                href={apiClient.getFilePreviewUrl(selectedFile)} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:text-blue-700 underline"

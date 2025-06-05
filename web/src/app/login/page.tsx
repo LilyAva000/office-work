@@ -84,7 +84,7 @@ export default function LoginPage() {
         >
           <Card className="glass-effect">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center font-bold">个人档案管理系统</CardTitle>
+              <CardTitle className="text-2xl text-center font-bold">"AI+” 档案管理</CardTitle>
               <CardDescription className="text-center">请输入您的账号和密码登录系统</CardDescription>
             </CardHeader>
             <CardContent>

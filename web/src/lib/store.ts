@@ -131,7 +131,7 @@ export const apiClient = {
   
   // 获取文件列表
   getTablesList: async (): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/list_tables`);
+    const response = await fetch(`${apiClient.API_BASE_URL}/list_preview`);
     
     if (!response.ok) {
       throw new Error(`获取文件列表失败: ${response.status}`);
@@ -141,7 +141,7 @@ export const apiClient = {
   },
   
   // 获取文件下载URL
-  getFileDownloadUrl: (filename: string): string => {
+  getFilePreviewUrl: (filename: string): string => {
     return `${apiClient.API_BASE_URL}/preview/${filename}`;
   },
   

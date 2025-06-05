@@ -123,18 +123,10 @@ export default function ProfilePage() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto px-4 py-8 max-w-6xl"
+      className="container mx-auto py-6 px-4 sm:px-6"
     >
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">个人中心</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            管理您的个人信息和文档
-          </p>
-        </div>
-      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8">
