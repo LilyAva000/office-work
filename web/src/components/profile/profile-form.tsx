@@ -111,22 +111,17 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       
       // 准备更新的数据
       const updatedUserInfo = formData
-      console.log("更新的数据formData: ", formData)
       
-      // 调用API更新数据
+      // 调用API 使用apiClient更新用户信息
       const username = localStorage.getItem('username');
       if (!username) {
         throw new Error('用户名不存在，请重新登录');
       }
-      
-      // 使用apiClient更新用户信息
       await apiClient.updateUserInfo(username, updatedUserInfo);
-      
-      // 更新本地存储
-      localStorage.setItem('profileData', JSON.stringify(formData));
       
       // 更新全局状态
       userStore.setUserInfo(updatedUserInfo);
+      console.log("更新的数据formData: ", updatedUserInfo)
       
       toast({
         title: '保存成功',

@@ -19,12 +19,8 @@ export default function LoginPage() {
 
   // 在页面加载时清除全局状态
   useEffect(() => {
-    // 清除用户信息
+    // 清除用户信息、登录状态
     userStore.clearUserInfo();
-    // 清除登录状态
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('username');
-    
     console.log('已清除登录状态和用户信息');
   }, []);
 
@@ -49,11 +45,10 @@ export default function LoginPage() {
         }
         
         // 存储用户信息到全局状态
-        userStore.setUserInfo(userInfo);
-        
+        userStore.setUserInfo(userInfo.info);
         // 存储登录状态
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('username', username);
+        localStorage.setItem('person_id', userInfo.person_id);
         
         toast({
           title: '登录成功',

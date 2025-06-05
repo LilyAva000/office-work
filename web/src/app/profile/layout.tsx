@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { apiClient, userStore } from '@/lib/store';
 
 export default function ProfileLayout({
   children,
@@ -36,8 +37,8 @@ export default function ProfileLayout({
   }, [router, toast]);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('username');
+    userStore.clearUserInfo();
+
     toast({
       title: '已退出登录',
       description: '您已成功退出系统',

@@ -34,6 +34,8 @@ export const userStore = {
   // 清除用户信息
   clearUserInfo: () => {
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('person_id');
+    localStorage.removeItem('isLoggedIn');
     window.dispatchEvent(createChangeEvent());
   },
 
@@ -125,6 +127,22 @@ export const apiClient = {
     } else {
       throw new Error(result.detail || '头像上传失败');
     }
+  },
+  
+  // 获取文件列表
+  getTablesList: async (): Promise<any> => {
+    const response = await fetch(`${apiClient.API_BASE_URL}/list_tables`);
+    
+    if (!response.ok) {
+      throw new Error(`获取文件列表失败: ${response.status}`);
+    }
+    
+    return await response.json();
+  },
+  
+  // 获取文件下载URL
+  getFileDownloadUrl: (filename: string): string => {
+    return `${apiClient.API_BASE_URL}/preview/${filename}`;
   },
   
   // 可以添加更多API请求方法
