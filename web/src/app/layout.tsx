@@ -7,8 +7,8 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: '个人档案管理系统',
-  description: '一个现代化的个人档案管理系统，支持个人资料管理和文档预览',
+  title: '"AI+” 档案管理',
+  description: '一个现代化的"AI+” 档案管理，支持根据个人资料自动化填表',
 };
 
 export default function RootLayout({

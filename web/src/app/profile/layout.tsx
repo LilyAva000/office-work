@@ -61,7 +61,7 @@ export default function ProfileLayout({
             transition={{ duration: 0.5 }}
             className="flex items-center space-x-2"
           >
-            <span className="text-xl font-bold text-primary">个人档案管理系统</span>
+            <span className="text-xl font-bold text-primary">"AI+” 档案管理</span>
           </motion.div>
           
           <motion.div 
@@ -92,7 +92,7 @@ export default function ProfileLayout({
       {/* 页脚 */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
         <div className="container mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          © {new Date().getFullYear()} 个人档案管理系统 - 保留所有权利
+          © {new Date().getFullYear()} "AI+” 档案管理 - 保留所有权利
         </div>
       </footer>
     </div>
