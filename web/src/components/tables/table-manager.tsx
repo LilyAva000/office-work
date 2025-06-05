@@ -15,6 +15,7 @@ export default function TableManager({ className }: TableManagerProps) {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [autoFilling, setAutoFilling] = useState(false);
   const { toast } = useToast();
 
   // 获取文件列表
@@ -68,6 +69,39 @@ export default function TableManager({ className }: TableManagerProps) {
         return '📝';
       default:
         return '📁';
+    }
+  };
+
+  // 自动填表并下载
+  const handleAutoFill = async () => {
+    if (!selectedFile) return;
+    setAutoFilling(true);
+    try {
+      // TODO 后期加管理员支持批量下载，目前仅支持单人自动填表下载
+      const person_id = localStorage.getItem('person_id');
+      const res = await apiClient.autoFillTable(selectedFile, person_id ? [person_id] : []);
+      if (res.status === 200) {
+        // 直接下载
+        const url = apiClient.BASE_URL + '/' + res.data.replace(/^\/+/, '');
+        const link = document.createElement('a');
+        // console.log('url', url);
+        link.href = url;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({ title: '自动填表成功', description: '已生成并开始下载填好的表格文件' });
+      } else {
+        throw new Error(res.message || '自动填表失败');
+      }
+    } catch (err: any) {
+      toast({
+        title: '自动填表失败',
+        description: err.message || '请稍后重试',
+        variant: 'destructive',
+      });
+    } finally {
+      setAutoFilling(false);
     }
   };
 
@@ -155,8 +189,21 @@ export default function TableManager({ className }: TableManagerProps) {
 
       {/* 右侧预览区域 */}
       <div className="flex-1 pl-4">
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold mb-2">表格预览</h3>
+          {selectedFile && (
+            <Button
+              onClick={handleAutoFill}
+              disabled={autoFilling}
+              className="ml-2 px-6 py-2 text-base font-bold rounded-lg shadow-lg bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-white flex items-center gap-1 transition-transform duration-200 hover:scale-105 hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+              style={{ minWidth: 120, minHeight: 44 }}
+            >
+              <span className="text-xl leading-none flex" style={{height: '1.25em', marginRight: '0.25rem'}}>
+                👉
+              </span>
+              {autoFilling ? '自动填表中...' : '自动填表'}
+            </Button>
+          )}
         </div>
 
         {selectedFile ? (

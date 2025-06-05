@@ -145,5 +145,22 @@ export const apiClient = {
     return `${apiClient.API_BASE_URL}/preview/${filename}`;
   },
   
+  // 自动填表
+  autoFillTable: async (filename: string, personIds: string[] = []): Promise<any> => {
+    console.log('开始自动填表1:', filename);
+    console.log('开始自动填表2:', personIds);
+    const response = await fetch(`${apiClient.API_BASE_URL}/filling/autofilling`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ table_name: filename, persons: personIds }),
+    });
+    if (!response.ok) {
+      throw new Error(`自动填表失败: ${response.status}`);
+    }
+    return await response.json();
+  },
+  
   // 可以添加更多API请求方法
 };
