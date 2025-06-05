@@ -1,6 +1,7 @@
 .venv/
 server/.venv/
 **/__pycache__
+server/static/logs
 
 web/node_modules/
 web/.next/

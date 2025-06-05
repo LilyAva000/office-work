@@ -1,14 +1,14 @@
 import os
 import json
 import zipfile
-from datetime import datetime
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from typing import List
-from docxtpl import DocxTemplate, InlineImage
+from datetime import datetime
+from pydantic import BaseModel
 from docx.shared import Mm
+from docxtpl import DocxTemplate, InlineImage
 from lib.xlsx_auto import ExcelTemplateFiller
+from fastapi import APIRouter, HTTPException
+from loguru import logger
 
 router = APIRouter()
 
@@ -60,8 +60,12 @@ def auto_filling(request: AutoFillingRequest):
                     filler.save()
                 else:
                     doc = DocxTemplate(template_path)
+                    logger.info(f"person_data: {person_data}")
+                    img_url = person_data['基本信息']['个人信息']['照片']
+                    img_url = os.path.join("server", img_url)
+                    logger.info(f"照片URL: {img_url}")
                     try:
-                        person_data['照片'] = InlineImage(doc, info['照片'], height=Mm(35))
+                        person_data['照片'] = InlineImage(doc, img_url, height=Mm(35))
                     except:
                         None
                     doc.render(person_data)

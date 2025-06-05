@@ -8,6 +8,7 @@ from .metadata_handler import router as metadata_router
 from .fileresource_handler import router as file_router
 from .login_handler import router as login_router
 from .autofilling_handler import router as autofilling_router
+from utils.tools import _init_logger
 
 # 创建 FastAPI 实例，禁用默认的docs端点，添加API前缀
 app = FastAPI(docs_url=None, redoc_url=None, prefix="/api")
@@ -20,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],  # 允许所有HTTP方法
     allow_headers=["*"],  # 允许所有HTTP头
 )
+
+# 日志初始化
+_init_logger()
 
 # 示例接口：根路径
 @app.get("/")
