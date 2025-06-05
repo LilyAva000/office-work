@@ -68,14 +68,14 @@ def preview_file(file_name: str):
         )
 
 # 获取文件模板列表接口
-@router.get("/list_tables")
-def get_empty():
+@router.get("/list_preview")
+def get_preview():
     try:
-        emptys = os.listdir("templates/empty")
+        preview_list = os.listdir("templates/preview")
         return {
             "status": 200,
             "message": "查询文件模板成功",
-            "data": emptys
+            "data": preview_list
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
