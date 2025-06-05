@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware  # 导入CORS中间件
 from .metadata_handler import router as metadata_router
 from .fileresource_handler import router as file_router
 from .login_handler import router as login_router
+from .autofilling_handler import router as autofilling_router
 
 # 创建 FastAPI 实例，禁用默认的docs端点，添加API前缀
 app = FastAPI(docs_url=None, redoc_url=None, prefix="/api")
@@ -29,6 +30,7 @@ def read_root():
 app.include_router(metadata_router, prefix="/api")
 app.include_router(file_router, prefix="/api")
 app.include_router(login_router, prefix="/api")
+app.include_router(autofilling_router, prefix="/api")
 
 # 暴露 static 目录
 app.mount("/static", StaticFiles(directory="static"), name="static")
