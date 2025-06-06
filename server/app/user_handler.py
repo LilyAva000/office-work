@@ -2,6 +2,7 @@ import json
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 from loguru import logger
+from lib.error_response import get_error
 
 router = APIRouter(tags=["user"])
 
@@ -38,28 +39,18 @@ def login(request: LoginRequest):
             valid_users = json.load(file)
             
         if request.username in valid_users and valid_users[request.username] == request.password:
-            return {
-                "status": 200,
-                "message": "登录成功",
-                "data": {"username": request.username}
-            }
+            status, message = 200, "登录成功"
+            data = {"username": request.username}
+            return {"status":status, "message":message,"data":data}
         else:
-            raise HTTPException(
-                status_code=401,
-                detail="用户名或密码错误"
-            )
+            status, message = get_error("INVALID_AUTHORIZATION")
+            return {"status":status, "message":message,"data":None}
     except FileNotFoundError:
-        raise HTTPException(
-            status_code=500,
-            detail="用户配置文件不存在"
-        )
+        status, message = get_error("DATABASE_ERROR")
+        return {"status":status, "message":message,"data":"服务器没有账密数据"}
     except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500,
-            detail="用户配置文件格式错误"
-        )
+        status, message = get_error("USER_CONFIG_FILE_FORMAT_ERROR")
+        return {"status":status, "message":message,"data":None}
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"登录验证失败：{str(e)}"
-        )
+        status, message = get_error("UNKNOWN_ERROR")
+        return {"status":status, "message":message,"data":f"登录验证失败：{str(e)}"}

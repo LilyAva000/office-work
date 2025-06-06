@@ -4,10 +4,10 @@ from loguru import logger
 
 
 def _init_logger():
-    log_dir = "static/logs/query_process_logs"
+    log_dir = "static/logs"
     os.makedirs(log_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
-    log_file = os.path.join(log_dir, f"query_{timestamp}.log")
+    log_file = os.path.join(log_dir, f"OfficeWork_Server_{timestamp}.log")
     logger.add(
         log_file,
         rotation="50 MB",

@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from lib.xlsx_auto import ExcelTemplateFiller
 from lib.docx_auto import DocxTemplateFiller
 from loguru import logger
+from lib.error_response import get_error
 
 router = APIRouter(tags=["table"])
 
@@ -52,10 +53,8 @@ def auto_filling(request: AutoFillingRequest):
     try:
         # 检查文件类型
         if not (request.table_name.startswith("excel") or request.table_name.startswith("word")):
-            raise HTTPException(
-                status_code=400,
-                detail="不支持的文件类型，仅支持 excel 和 word 文件"
-            )
+            status, message = get_error("INVALID_FILE_TYPE")
+            return {"status":status, "message":message,"data":None}
         
         # 构建模板文件名和路径
         template_end = "xlsx" if request.table_name.startswith("excel") else "docx"
@@ -66,10 +65,8 @@ def auto_filling(request: AutoFillingRequest):
         
         # 检查模板文件是否存在
         if not os.path.exists(template_path):
-            raise HTTPException(
-                status_code=404,
-                detail=f"模板文件 {template_name} 不存在"
-            )
+            status, message = get_error("FILE_NOT_FOUND")
+            return {"status":status, "message":message,"data":f"模板文件 {template_name} 不存在"}
         
         # 处理每个人的数据
         results = []
@@ -95,47 +92,37 @@ def auto_filling(request: AutoFillingRequest):
                 
                 results.append(output_path)
             except Exception as e:
-                if isinstance(e, HTTPException):
-                    raise e
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"自动填充处理失败：{str(e)}"
-                )
+                status, message = get_error("AUTO_FILLING_ERROR")
+                return {"status":status, "message":message,"data":f"自动填充处理失败：{str(e)}"}
 
         if len(results) == 1:
-            return {
-                "status": 200,
-                "message": "自动填充处理成功",
-                "data": results[0]
-            }
+            status, message = 200, "自动填充处理成功"
+            data = results[0]
+            return {"status":status, "message":message,"data":data}
         else:
-            # 创建zip文件名（使用时间戳避免重名）
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            zip_filename = f"batch_output_{timestamp}.zip"
-            zip_path = os.path.join("output", zip_filename)
-            
-            # 创建zip文件
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for result in results:
-                    file_path = os.path.join("output", result)
-                    if os.path.exists(file_path):
-                        # 将文件添加到zip中
-                        zipf.write(file_path, result)
-            
-            return {
-                "status": 200,
-                "message": "批量处理成功，已打包为zip文件",
-                "data": zip_path
-            }
-
-        
+            try:
+                # 创建zip文件名（使用时间戳避免重名）
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                zip_filename = f"batch_output_{timestamp}.zip"
+                zip_path = os.path.join("output", zip_filename)
+                
+                # 创建zip文件
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for result in results:
+                        file_path = os.path.join("output", result)
+                        if os.path.exists(file_path):
+                            # 将文件添加到zip中
+                            zipf.write(file_path, result)
+                
+                status, message = 200, "批量处理成功，已打包为zip文件"
+                data = zip_path
+                return {"status":status, "message":message,"data":data}
+            except Exception as e:
+                status, message = get_error("ZIP_CREATION_ERROR")
+                return {"status":status, "message":message,"data":f"文件压缩失败：{str(e)}"}
     except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(
-            status_code=500,
-            detail=f"自动填充处理失败：{str(e)}"
-        )
+        status, message = get_error("UNKNOWN_ERROR")
+        return {"status":status, "message":message,"data":f"自动填充处理失败：{str(e)}"}
     
 
     # 获取文件模板列表接口

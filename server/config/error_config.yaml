@@ -1,0 +1,51 @@
+SUCCESS:
+  code: 200
+  message: 成功
+
+PERSON_NOT_FOUND:
+  code: 400
+  message: 用户不存在
+
+INVALID_AUTHORIZATION:
+  code: 401
+  message: 账密错误
+
+PERSON_INFO_STRUCTURE_ERROR:
+  code: 402
+  message: 用户信息结构异常
+
+USER_CONFIG_FILE_FORMAT_ERROR:
+  code: 403
+  message: 用户配置文件格式错误，仅支持json文件
+
+PARAMETERS_ERROR:
+  code: 501
+  message: 参数传递错误
+
+INVALID_FILE_TYPE:
+  code: 502
+  message: 不支持的文件类型，仅支持xlsx和docx文件
+
+INVALID_IMG_TYPE:
+  code: 503
+  message: 不支持的图片类型，仅支持jpg, jpeg, png图片
+
+FILE_NOT_FOUND:
+  code: 504
+  message: 模板文件不存在
+
+AUTO_FILLING_ERROR:
+  code: 505
+  message: 模板填充失败
+
+ZIP_CREATION_ERROR:
+  code: 506
+  message: 文件压缩失败
+
+DATABASE_ERROR:
+  code: 507
+  message: 后台数据错误
+
+UNKNOWN_ERROR:
+  code: 500
+  message: 服务器错误，请查看详情信息

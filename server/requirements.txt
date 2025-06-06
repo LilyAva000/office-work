@@ -7,3 +7,4 @@ fastapi>=0.103.0
 uvicorn>=0.29.0
 python-multipart>=0.0.20
 loguru>=0.7.3
+pyyaml>=6.0.1
