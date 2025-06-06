@@ -24,9 +24,9 @@ export default function ProfilePage() {
         setIsLoading(true);
         
         // 检查登录状态
-        const loginStatus = localStorage.getItem('isLoggedIn');
+        const loginStatus = userStore.get('isLoggedIn');
         console.log('当前登录状态:', loginStatus);
-        if (loginStatus !== 'true') {
+        if (!loginStatus) {
           toast({
             title: '未登录',
             description: '请先登录后再访问个人资料页面',
@@ -36,26 +36,12 @@ export default function ProfilePage() {
           return;
         }
         
-        // 首先尝试从全局状态获取
-        let userInfo = userStore.getUserInfo();
-        
-        if (userInfo) {
-          console.log('从全局状态加载用户信息');
-          setProfileData(userInfo);
-          return;
-        }
-        
-        // 然后尝试从localStorage获取
-        const storedUserInfo = localStorage.getItem('userInfo');
+        // 然后尝试从userStore(store.ts)获取
+        const storedUserInfo = userStore.get('userInfo');
         if (storedUserInfo) {
-          try {
-            userInfo = JSON.parse(storedUserInfo);
-            console.log('从localStorage加载用户信息');
-            setProfileData(userInfo);
-            return;
-          } catch (parseError) {
-            console.error('解析localStorage中的用户信息失败:', parseError);
-          }
+          console.log('从localStorage加载用户信息');
+          setProfileData(storedUserInfo);
+          return;
         }
         
         // 最后加载模板数据

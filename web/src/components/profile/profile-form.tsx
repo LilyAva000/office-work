@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { userStore, apiClient } from '@/lib/store';
+import { userStore } from '@/lib/store';
+import { apiClient } from '@/lib/apiClient';
 import React, { useRef } from 'react';
 
 interface ProfileFormProps {
@@ -103,21 +104,21 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     
     try {
       // 获取当前用户信息
-      const userInfo = userStore.getUserInfo();
+      const userInfo = userStore.get('userInfo');
       console.log("userInfo: ", userInfo)
       
       // 准备更新的数据
       const updatedUserInfo = formData
       
       // 调用API 使用apiClient更新用户信息
-      const personId = localStorage.getItem('person_id');
+      const personId = userStore.get('personId');
       if (!personId) {
         throw new Error('用户名不存在，请重新登录');
       }
       await apiClient.updateUserInfo(personId, updatedUserInfo);
       
       // 更新全局状态
-      userStore.setUserInfo(updatedUserInfo);
+      userStore.set('userInfo', updatedUserInfo);
       console.log("更新的数据formData: ", updatedUserInfo)
       
       toast({
@@ -143,7 +144,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     if (!file) return;
     setAvatarUploading(true);
     try {
-      const personId = localStorage.getItem('person_id');
+      const personId = userStore.get('personId');
       if (!personId) throw new Error('上传头像用户person_id不存在');
       const result = await apiClient.uploadAvatar(personId, file);
       if (result.status === 200 && result.avatar) {

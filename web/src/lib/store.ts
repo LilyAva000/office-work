@@ -8,37 +8,63 @@ const createChangeEvent = () => {
   return new CustomEvent(USER_INFO_CHANGE_EVENT);
 };
 
-// 用户信息存储和管理
-export const userStore = {
-  // 设置用户信息
-  setUserInfo: (userInfo: any) => {
-    // 存储到localStorage
-    localStorage.setItem('userInfo', JSON.stringify(userInfo));
-    // 触发变更事件
-    window.dispatchEvent(createChangeEvent());
-  },
-
-  // 获取用户信息
-  getUserInfo: (): any | null => {
-    const userInfoStr = localStorage.getItem('userInfo');
-    if (!userInfoStr) return null;
-    
-    try {
-      return JSON.parse(userInfoStr);
-    } catch (error) {
-      console.error('解析用户信息失败:', error);
-      return null;
+// 集中管理所有key和localStorage字段映射及序列化规则
+const USER_STORE_META = {
+  userInfo: {
+    storageKey: 'userInfo',
+    serialize: (v: any) => JSON.stringify(v),
+    deserialize: (v: string | null) => {
+      if (!v) return null;
+      try { return JSON.parse(v); } catch { return null; }
     }
   },
+  personId: {
+    storageKey: 'personId',
+    serialize: (v: any) => v,
+    deserialize: (v: string | null) => v
+  },
+  isLoggedIn: {
+    storageKey: 'isLoggedIn',
+    serialize: (v: any) => v ? 'true' : 'false',
+    deserialize: (v: string | null) => v === 'true'
+  }
+} as const;
+type UserStoreKey = keyof typeof USER_STORE_META;
 
-  // 清除用户信息
-  clearUserInfo: () => {
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('person_id');
-    localStorage.removeItem('isLoggedIn');
+// 用户信息存储和管理
+export const userStore = {
+  // 通用设置
+  set: (key: UserStoreKey, value: any) => {
+    const meta = USER_STORE_META[key];
+    if (!meta) {
+      console.error(`[userStore] set: 不存在的key: ${key}`);
+      return;
+    }
+    localStorage.setItem(meta.storageKey, meta.serialize(value));
     window.dispatchEvent(createChangeEvent());
   },
-
+  // 通用获取
+  get: (key: UserStoreKey) => {
+    const meta = USER_STORE_META[key];
+    if (!meta) {
+      console.error(`[userStore] get: 不存在的key: ${key}`);
+      return null;
+    }
+    return meta.deserialize(localStorage.getItem(meta.storageKey));
+  },
+  // 一次性初始化所有
+  init: (data: { userInfo: any; personId: string; isLoggedIn: boolean }) => {
+    (Object.keys(USER_STORE_META) as UserStoreKey[]).forEach(key => {
+      // @ts-ignore
+      userStore.set(key, data[key]);
+    });
+    window.dispatchEvent(createChangeEvent());
+  },
+  // 一次性清空所有
+  clear: () => {
+    Object.values(USER_STORE_META).forEach(meta => localStorage.removeItem(meta.storageKey));
+    window.dispatchEvent(createChangeEvent());
+  },
   // 订阅用户信息变化
   subscribe: (callback: () => void) => {
     window.addEventListener(USER_INFO_CHANGE_EVENT, callback);
@@ -48,120 +74,4 @@ export const userStore = {
   }
 };
 
-// 注意！！路径中/的拼接，多余的/会导致请求失败
-const BASE_URL = 'http://127.0.0.1:8008';
-const API_BASE_URL = BASE_URL + '/api';
 
-// API请求工具
-export const apiClient = {
-  BASE_URL,
-  API_BASE_URL,
-  
-  // 登录方法
-  login: async (username: string, password: string): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/user/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username,
-        password
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`登录失败: ${response.status}`);
-    }
-    
-    return await response.json();
-  },
-
-  // 获取用户信息
-  getUserInfo: async (username: string): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/info/${username}`);
-    
-    if (!response.ok) {
-      throw new Error(`获取用户信息失败: ${response.status}`);
-    }
-
-    const res = await response.json();
-    if (res.status === 200) {
-      return res.data;
-    } else {
-      throw new Error(res.message || '获取用户信息失败');
-    }
-  },
-  
-  // 更新用户信息
-  updateUserInfo: async (username: string, userInfo: any): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/info/${username}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        person_info: userInfo
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`更新用户信息失败: ${response.status}`);
-    }
-    
-    return await response.json();
-  },
-  
-  // 上传头像
-  uploadAvatar: async (persion_id: string, file: File): Promise<any> => {
-    const formData = new FormData();
-    formData.append('persion_id', persion_id);
-    formData.append('file', file);
-    console.log('uploadAvatar上传头像:', persion_id, file);
-    const response = await fetch(`${apiClient.API_BASE_URL}/info/upload_avatar`, {
-      method: 'POST',
-      body: formData,
-    });
-    const result = await response.json();
-    if (result.status === 200 && result.avatar) {
-      return result;
-    } else {
-      throw new Error(result.detail || '头像上传失败');
-    }
-  },
-  
-  // 获取文件列表
-  getTablesList: async (): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/table/list_preview`);
-    
-    if (!response.ok) {
-      throw new Error(`获取文件列表失败: ${response.status}`);
-    }
-    
-    return await response.json();
-  },
-  
-  // 获取文件下载URL
-  getFilePreviewUrl: (filename: string): string => {
-    return `${apiClient.API_BASE_URL}/table/preview/${filename}`;
-  },
-  
-  // 自动填表
-  autoFillTable: async (filename: string, personIds: string[] = []): Promise<any> => {
-    console.log('开始自动填表1:', filename);
-    console.log('开始自动填表2:', personIds);
-    const response = await fetch(`${apiClient.API_BASE_URL}/table/autofill`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ table_name: filename, persons: personIds }),
-    });
-    if (!response.ok) {
-      throw new Error(`自动填表失败: ${response.status}`);
-    }
-    return await response.json();
-  },
-  
-  // 可以添加更多API请求方法
-};
