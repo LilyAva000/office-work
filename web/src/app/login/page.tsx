@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { apiClient, userStore } from '@/lib/store';
+import { apiClient } from '@/lib/apiClient';
+import { userStore } from '@/lib/store';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');

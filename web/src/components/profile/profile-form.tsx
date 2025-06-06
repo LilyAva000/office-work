@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { userStore, apiClient } from '@/lib/store';
+import { userStore } from '@/lib/store';
+import { apiClient } from '@/lib/apiClient';
 import React, { useRef } from 'react';
 
 interface ProfileFormProps {

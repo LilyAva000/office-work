@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { apiClient, userStore } from '@/lib/store';
+import { apiClient } from '@/lib/apiClient';
+import { userStore } from '@/lib/store';
 
 export default function ProfileLayout({
   children,

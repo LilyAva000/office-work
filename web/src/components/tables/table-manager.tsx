@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { apiClient } from '@/lib/store';
+import { apiClient } from '@/lib/apiClient';
 
 interface TableManagerProps {
   className?: string;
