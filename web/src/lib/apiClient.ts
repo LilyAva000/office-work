@@ -57,11 +57,11 @@ export const apiClient = {
     },
 
     // 上传头像
-    uploadAvatar: async (persion_id: string, file: File): Promise<any> => {
+    uploadAvatar: async (personId: string, file: File): Promise<any> => {
         const formData = new FormData();
-        formData.append('persion_id', persion_id);
+        formData.append('persion_id', personId);
         formData.append('file', file);
-        console.log('uploadAvatar上传头像:', persion_id, file);
+        console.log('uploadAvatar上传头像:', personId, file);
         const response = await fetch(`${API_BASE_URL}/info/upload_avatar`, {
             method: 'POST',
             body: formData,

@@ -22,11 +22,11 @@ export default function ProfileLayout({
   useEffect(() => {
     setIsClient(true);
     // 检查登录状态
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const storedUserInfo = localStorage.getItem('userInfo');
-    // const storedUsername = storedUserInfo ? JSON.parse(storedUserInfo)['基本信息']['个人信息']['姓名'] : '';
+    const isLoggedIn = userStore.get('isLoggedIn');
+    // const storedUserInfo = userStore.get('userInfo');
+    // const storedUsername = storedUserInfo ? storedUserInfo['基本信息']['个人信息']['姓名'] : '';
     // TODO 此处待考量，persion_id尽量不要和username 划等号！！
-    const storedUsername = localStorage.getItem('person_id')
+    const storedUsername = userStore.get('personId');
     if (!isLoggedIn) {
       toast({
         variant: 'destructive',
@@ -40,7 +40,7 @@ export default function ProfileLayout({
   }, [router, toast]);
 
   const handleLogout = () => {
-    userStore.clearUserInfo();
+    userStore.clear();
 
     toast({
       title: '已退出登录',
