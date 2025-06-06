@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import ProfileForm from '@/components/profile/profile-form';
 import TableManager from '@/components/tables/table-manager';
-import { userStore } from '@/lib/store';
+import { useUserStore } from '@/lib/useUserStore';
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -18,15 +18,14 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  const isLoggedIn = useUserStore((s) => s.isLoggedIn);
+  const userInfo = useUserStore((s) => s.userInfo);
+
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setIsLoading(true);
-        
-        // 检查登录状态
-        const loginStatus = userStore.get('isLoggedIn');
-        console.log('当前登录状态:', loginStatus);
-        if (!loginStatus) {
+        if (!isLoggedIn) {
           toast({
             title: '未登录',
             description: '请先登录后再访问个人资料页面',
@@ -35,17 +34,10 @@ export default function ProfilePage() {
           router.push('/login');
           return;
         }
-        
-        // 然后尝试从userStore(store.ts)获取
-        const storedUserInfo = userStore.get('userInfo');
-        if (storedUserInfo) {
-          console.log('从localStorage加载用户信息');
-          setProfileData(storedUserInfo);
+        if (userInfo) {
+          setProfileData(userInfo);
           return;
         }
-        
-        // 最后加载模板数据
-        console.log('加载模板数据');
         const response = await fetch('/form-template.json');
         if (response.ok) {
           const templateData = await response.json();
@@ -56,7 +48,6 @@ export default function ProfilePage() {
       } catch (err) {
         console.error('加载个人资料失败:', err);
         setError('无法加载个人资料数据，请刷新页面重试');
-        
         toast({
           title: '加载失败',
           description: '无法加载个人资料数据',
@@ -66,12 +57,8 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     };
-
     fetchProfileData();
-  }, [router, toast]);
-
-
-
+  }, [router, toast, isLoggedIn, userInfo]);
 
   // 渲染加载状态
   if (isLoading) {

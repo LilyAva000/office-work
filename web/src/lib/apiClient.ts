@@ -61,16 +61,17 @@ export const apiClient = {
         const formData = new FormData();
         formData.append('person_id', personId);
         formData.append('file', file);
-        console.log('uploadAvatar上传头像:', personId, file);
         const response = await fetch(`${API_BASE_URL}/info/upload_avatar`, {
             method: 'POST',
             body: formData,
         });
         const result = await response.json();
-        if (result.status === 200 && result.avatar) {
+
+        if (result.status === 200) {
             return result;
         } else {
-            throw new Error(result.detail || '头像上传失败');
+            console.log('uploadAvatar err');
+            throw new Error(result.data || '头像上传失败');
         }
     },
 

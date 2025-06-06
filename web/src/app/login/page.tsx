@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/apiClient';
-import { userStore } from '@/lib/store';
+import { useUserStore } from '@/lib/useUserStore';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -18,12 +18,17 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const setUserInfo = useUserStore((s) => s.setUserInfo);
+  const setPersonId = useUserStore((s) => s.setPersonId);
+  const setIsLoggedIn = useUserStore((s) => s.setIsLoggedIn);
+  const clearUser = useUserStore((s) => s.clear);
+  const initUser = useUserStore((s) => s.init);
+
   // 在页面加载时清除全局状态
   useEffect(() => {
-    // 清除用户信息、登录状态
-    userStore.clear();
+    clearUser();
     console.log('已清除登录状态和用户信息');
-  }, []);
+  }, [clearUser]);
 
   // 处理登录
   const handleLogin = async (e: React.FormEvent) => {
@@ -46,7 +51,7 @@ export default function LoginPage() {
         }
         
         // 存储用户信息到全局状态
-        userStore.init({
+        initUser({
           userInfo: userInfo.info,
           personId: userInfo.person_id,
           isLoggedIn: true

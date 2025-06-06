@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { userStore } from '@/lib/store';
+import { useUserStore } from '@/lib/useUserStore';
 import { apiClient } from '@/lib/apiClient';
 import React, { useRef } from 'react';
 
@@ -28,6 +28,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const [avatarHover, setAvatarHover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const personId = useUserStore((s) => s.personId);
+  const setUserInfo = useUserStore((s) => s.setUserInfo);
 
   // 处理表单字段变更
   const handleChange = (section: string, subsection: string | null, field: string, value: string) => {
@@ -103,24 +106,13 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     setIsSaving(true);
     
     try {
-      // 获取当前用户信息
-      const userInfo = userStore.get('userInfo');
-      console.log("userInfo: ", userInfo)
-      
-      // 准备更新的数据
-      const updatedUserInfo = formData
-      
-      // 调用API 使用apiClient更新用户信息
-      const personId = userStore.get('personId');
+      const userInfo = useUserStore.getState().userInfo;
+      const updatedUserInfo = formData;
       if (!personId) {
         throw new Error('用户名不存在，请重新登录');
       }
       await apiClient.updateUserInfo(personId, updatedUserInfo);
-      
-      // 更新全局状态
-      userStore.set('userInfo', updatedUserInfo);
-      console.log("更新的数据formData: ", updatedUserInfo)
-      
+      setUserInfo(updatedUserInfo);
       toast({
         title: '保存成功',
         description: '个人资料已更新',
@@ -144,11 +136,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     if (!file) return;
     setAvatarUploading(true);
     try {
-      const personId = userStore.get('personId');
       if (!personId) throw new Error('上传头像用户person_id不存在');
       const result = await apiClient.uploadAvatar(personId, file);
-      if (result.status === 200 && result.avatar) {
-        // 只更新照片字段
+      if (result.status === 200) {
         setFormData((prev: any) => ({
           ...prev,
           avatarKey: Date.now(),
@@ -156,7 +146,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             ...prev.基本信息,
             个人信息: {
               ...prev.基本信息.个人信息,
-              照片: result.avatar,
+              照片: result.data,
             },
           },
         }));

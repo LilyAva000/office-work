@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/apiClient';
-import { userStore } from '@/lib/store';
+import { useUserStore } from '@/lib/useUserStore';
 
 interface TableManagerProps {
   className?: string;
@@ -18,6 +18,7 @@ export default function TableManager({ className }: TableManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [autoFilling, setAutoFilling] = useState(false);
   const { toast } = useToast();
+  const personId = useUserStore((s) => s.personId);
 
   // 获取文件列表
   useEffect(() => {
@@ -78,14 +79,10 @@ export default function TableManager({ className }: TableManagerProps) {
     if (!selectedFile) return;
     setAutoFilling(true);
     try {
-      // TODO 后期加管理员支持批量下载，目前仅支持单人自动填表下载
-      const personId = userStore.get('personId');
       const res = await apiClient.autoFillTable(selectedFile, personId ? [personId] : []);
       if (res.status === 200) {
-        // 直接下载
         const url = apiClient.BASE_URL + '/' + res.data.replace(/^\/+/, '');
         const link = document.createElement('a');
-        // console.log('url', url);
         link.href = url;
         link.download = '';
         document.body.appendChild(link);

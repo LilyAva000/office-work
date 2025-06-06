@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/apiClient';
-import { userStore } from '@/lib/store';
+import { useUserStore } from '@/lib/useUserStore';
 
 export default function ProfileLayout({
   children,
@@ -19,14 +19,12 @@ export default function ProfileLayout({
   const [username, setUsername] = useState('');
   const [isClient, setIsClient] = useState(false);
 
+  const isLoggedIn = useUserStore((s) => s.isLoggedIn);
+  const personId = useUserStore((s) => s.personId);
+  const clearUser = useUserStore((s) => s.clear);
+
   useEffect(() => {
     setIsClient(true);
-    // 检查登录状态
-    const isLoggedIn = userStore.get('isLoggedIn');
-    // const storedUserInfo = userStore.get('userInfo');
-    // const storedUsername = storedUserInfo ? storedUserInfo['基本信息']['个人信息']['姓名'] : '';
-    // TODO 此处待考量，persion_id尽量不要和username 划等号！！
-    const storedUsername = userStore.get('personId');
     if (!isLoggedIn) {
       toast({
         variant: 'destructive',
@@ -34,14 +32,13 @@ export default function ProfileLayout({
         description: '请先登录系统',
       });
       router.push('/login');
-    } else if (storedUsername) {
-      setUsername(storedUsername);
+    } else if (personId) {
+      setUsername(personId);
     }
-  }, [router, toast]);
+  }, [router, toast, isLoggedIn, personId]);
 
   const handleLogout = () => {
-    userStore.clear();
-
+    clearUser();
     toast({
       title: '已退出登录',
       description: '您已成功退出系统',
