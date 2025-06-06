@@ -59,7 +59,7 @@ export const apiClient = {
     // 上传头像
     uploadAvatar: async (personId: string, file: File): Promise<any> => {
         const formData = new FormData();
-        formData.append('persion_id', personId);
+        formData.append('person_id', personId);
         formData.append('file', file);
         console.log('uploadAvatar上传头像:', personId, file);
         const response = await fetch(`${API_BASE_URL}/info/upload_avatar`, {
@@ -90,8 +90,8 @@ export const apiClient = {
 
     // 自动填表
     autoFillTable: async (filename: string, personIds: string[] = []): Promise<any> => {
-        console.log('开始自动填表1:', filename);
-        console.log('开始自动填表2:', personIds);
+        // console.log('开始自动填表1:', filename);
+        // console.log('开始自动填表2:', personIds);
         const response = await fetch(`${API_BASE_URL}/table/autofill`, {
             method: 'POST',
             headers: {
