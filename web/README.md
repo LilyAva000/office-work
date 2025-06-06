@@ -16,6 +16,7 @@
 ```bash
 cd web
 npm install
+npm install zustand
 npx shadcn-ui@latest init
 npx shadcn@latest init
 ```
