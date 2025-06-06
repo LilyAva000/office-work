@@ -74,7 +74,8 @@ export default function ProfileLayout({
           >
             <div className="flex items-center space-x-2">
               <Avatar>
-                <AvatarImage src="https://placekitten.com/100/100" alt={username} />
+                {/* 只想显示用户名缩写，不用图片展示 */}
+                {/* <AvatarImage src="https://placekitten.com/100/100" alt={username} /> */}
                 <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="font-medium">{username}</span>

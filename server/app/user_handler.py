@@ -1,8 +1,9 @@
 import json
-from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from loguru import logger
 
-router = APIRouter()
+router = APIRouter(tags=["user"])
 
 class LoginRequest(BaseModel):
     username: str
@@ -10,6 +11,28 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 def login(request: LoginRequest):
+    """
+    用户登录接口
+
+    参数:
+        request: LoginRequest
+            - username: 用户名
+            - password: 密码
+
+    请求格式:
+    ```json
+    {
+        "username": "lisi",
+        "password": "123456"
+    }
+    ```
+
+    TODO 后期完善登录验证功能，需要返回用户唯一标识ID供前端全局存储使用
+    返回:
+        status: 状态码
+        message: 提示信息
+        data: {"username": 用户名}
+    """
     try:
         with open("data/login/user_password.json", "r") as file:
             valid_users = json.load(file)

@@ -59,7 +59,7 @@ export const apiClient = {
   
   // 登录方法
   login: async (username: string, password: string): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/login`, {
+    const response = await fetch(`${apiClient.API_BASE_URL}/user/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -113,11 +113,12 @@ export const apiClient = {
   },
   
   // 上传头像
-  uploadAvatar: async (username: string, file: File): Promise<any> => {
+  uploadAvatar: async (persion_id: string, file: File): Promise<any> => {
     const formData = new FormData();
-    formData.append('username', username);
+    formData.append('persion_id', persion_id);
     formData.append('file', file);
-    const response = await fetch(`${apiClient.API_BASE_URL}/upload_avatar`, {
+    console.log('uploadAvatar上传头像:', persion_id, file);
+    const response = await fetch(`${apiClient.API_BASE_URL}/info/upload_avatar`, {
       method: 'POST',
       body: formData,
     });
@@ -131,7 +132,7 @@ export const apiClient = {
   
   // 获取文件列表
   getTablesList: async (): Promise<any> => {
-    const response = await fetch(`${apiClient.API_BASE_URL}/list_preview`);
+    const response = await fetch(`${apiClient.API_BASE_URL}/table/list_preview`);
     
     if (!response.ok) {
       throw new Error(`获取文件列表失败: ${response.status}`);
@@ -142,14 +143,14 @@ export const apiClient = {
   
   // 获取文件下载URL
   getFilePreviewUrl: (filename: string): string => {
-    return `${apiClient.API_BASE_URL}/preview/${filename}`;
+    return `${apiClient.API_BASE_URL}/table/preview/${filename}`;
   },
   
   // 自动填表
   autoFillTable: async (filename: string, personIds: string[] = []): Promise<any> => {
     console.log('开始自动填表1:', filename);
     console.log('开始自动填表2:', personIds);
-    const response = await fetch(`${apiClient.API_BASE_URL}/filling/autofilling`, {
+    const response = await fetch(`${apiClient.API_BASE_URL}/table/autofill`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

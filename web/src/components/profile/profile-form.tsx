@@ -104,20 +104,17 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     try {
       // 获取当前用户信息
       const userInfo = userStore.getUserInfo();
-      
-      if (!userInfo || !userInfo.person_id) {
-        throw new Error('用户信息不存在，请重新登录');
-      }
+      console.log("userInfo: ", userInfo)
       
       // 准备更新的数据
       const updatedUserInfo = formData
       
       // 调用API 使用apiClient更新用户信息
-      const username = localStorage.getItem('username');
-      if (!username) {
+      const personId = localStorage.getItem('person_id');
+      if (!personId) {
         throw new Error('用户名不存在，请重新登录');
       }
-      await apiClient.updateUserInfo(username, updatedUserInfo);
+      await apiClient.updateUserInfo(personId, updatedUserInfo);
       
       // 更新全局状态
       userStore.setUserInfo(updatedUserInfo);
