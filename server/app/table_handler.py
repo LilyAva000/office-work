@@ -4,21 +4,25 @@ import zipfile
 from typing import List
 from datetime import datetime
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import FileResponse
 from lib.xlsx_auto import ExcelTemplateFiller
 from lib.docx_auto import DocxTemplateFiller
+from .api_common import AppException, APIResponse, make_responses, auto_handle_exceptions
 from loguru import logger
-from lib.error_response import get_error
+import aiofiles
+
 
 router = APIRouter(tags=["table"])
 
 class AutoFillingRequest(BaseModel):
-    table_name: str  # 需要填充的模板文件名（如 excel-table.xlsx 或 word-table.docx）
-    persons: List[str]  # 需要填充的人员ID列表
+    table_name: str
+    persons: List[str]
 
-@router.post("/autofill")
-def auto_filling(request: AutoFillingRequest):
+@router.post("/autofill", response_model=APIResponse, responses=make_responses(
+    'INVALID_FILE_TYPE', 'FILE_NOT_FOUND', 'AUTO_FILLING_ERROR', 'ZIP_CREATION_ERROR', 'UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def auto_filling(request: AutoFillingRequest):
     """
     提供对xlsx/docx表格的自动填表及下载功能。
 
@@ -50,86 +54,46 @@ def auto_filling(request: AutoFillingRequest):
         message: 提示信息
         data: 生成的文件路径（单人）或zip包路径（多人）
     """
-    try:
-        # 检查文件类型
-        if not (request.table_name.startswith("excel") or request.table_name.startswith("word")):
-            status, message = get_error("INVALID_FILE_TYPE")
-            return {"status":status, "message":message,"data":None}
-        
-        # 构建模板文件名和路径
-        template_end = "xlsx" if request.table_name.startswith("excel") else "docx"
-        template_name = request.table_name.split(".")[0]
-        template_name = f"{template_name}-template.{template_end}"
-        template_dir = "templates/xlsx" if template_end=="xlsx" else "templates/docx"
-        template_path = os.path.join(template_dir, template_name)
-        
-        # 检查模板文件是否存在
-        if not os.path.exists(template_path):
-            status, message = get_error("FILE_NOT_FOUND")
-            return {"status":status, "message":message,"data":f"模板文件 {template_name} 不存在"}
-        
-        # 处理每个人的数据
-        results = []
-        for person_id in request.persons:
-            try:
-                # 读取个人数据
-                person_data_path = f"data/persons/{person_id}.json"
-                with open(person_data_path, "r", encoding="utf-8") as f:
-                    person_data = json.load(f)
-                
-                # 构建输出文件名
-                output_filename = f"{request.table_name.split('.')[0]}-{person_id}.{template_end}"
-                output_path = os.path.join("static/output", output_filename)
-                
-                # 根据文件类型选择处理器
-                if request.table_name.startswith("excel"):
-                    filler = ExcelTemplateFiller(template_path, output_path)
-                else:
-                    filler = DocxTemplateFiller(template_path, output_path)
-                    
-                filler.fill(person_data)
-                filler.save()
-                
-                results.append(output_path)
-            except Exception as e:
-                status, message = get_error("AUTO_FILLING_ERROR")
-                return {"status":status, "message":message,"data":f"自动填充处理失败：{str(e)}"}
-
-        if len(results) == 1:
-            status, message = 200, "自动填充处理成功"
-            data = results[0]
-            return {"status":status, "message":message,"data":data}
+    if not (request.table_name.startswith("excel") or request.table_name.startswith("word")):
+        raise AppException(*AppException.get_error("INVALID_FILE_TYPE"))
+    template_end = "xlsx" if request.table_name.startswith("excel") else "docx"
+    template_name = request.table_name.split(".")[0]
+    template_name = f"{template_name}-template.{template_end}"
+    template_dir = "templates/xlsx" if template_end=="xlsx" else "templates/docx"
+    template_path = os.path.join(template_dir, template_name)
+    if not os.path.exists(template_path):
+        raise AppException(*AppException.get_error("FILE_NOT_FOUND"), f"模板文件 {template_name} 不存在")
+    results = []
+    for person_id in request.persons:
+        person_data_path = f"data/persons/{person_id}.json"
+        async with aiofiles.open(person_data_path, "r", encoding="utf-8") as f:
+            content = await f.read()
+            person_data = json.loads(content)
+        output_filename = f"{request.table_name.split('.')[0]}-{person_id}.{template_end}"
+        output_path = os.path.join("static/output", output_filename)
+        if request.table_name.startswith("excel"):
+            filler = ExcelTemplateFiller(template_path, output_path)
         else:
-            try:
-                # 创建zip文件名（使用时间戳避免重名）
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                zip_filename = f"batch_output_{timestamp}.zip"
-                zip_path = os.path.join("output", zip_filename)
-                
-                # 创建zip文件
-                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    for result in results:
-                        file_path = os.path.join("output", result)
-                        if os.path.exists(file_path):
-                            # 将文件添加到zip中
-                            zipf.write(file_path, result)
-                
-                status, message = 200, "批量处理成功，已打包为zip文件"
-                data = zip_path
-                return {"status":status, "message":message,"data":data}
-            except Exception as e:
-                status, message = get_error("ZIP_CREATION_ERROR")
-                return {"status":status, "message":message,"data":f"文件压缩失败：{str(e)}"}
-    except Exception as e:
-        status, message = get_error("UNKNOWN_ERROR")
-        return {"status":status, "message":message,"data":f"自动填充处理失败：{str(e)}"}
-    
+            filler = DocxTemplateFiller(template_path, output_path)
+        filler.fill(person_data)
+        filler.save()
+        results.append(output_path)
+    if len(results) == 1:
+        return APIResponse(code=200, msg="自动填充处理成功", data=results[0])
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"batch_output_{timestamp}.zip"
+        zip_path = os.path.join("output", zip_filename)
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for result in results:
+                file_path = os.path.join("output", result)
+                if os.path.exists(file_path):
+                    zipf.write(file_path, result)
+        return APIResponse(code=200, msg="批量处理成功，已打包为zip文件", data=zip_path)
 
-    # 获取文件模板列表接口
-
-
-@router.get("/list_preview")
-def get_preview():
+@router.get("/list_preview", response_model=APIResponse, responses=make_responses('UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def get_preview():
     """
     获取支持自动填表的文件模板列表。
 
@@ -141,19 +105,12 @@ def get_preview():
         message: 提示信息
         data: 文件模板名列表（List[str)）
     """
-    try:
-        preview_list = os.listdir("templates/preview")
-        return {
-            "status": 200,
-            "message": "查询文件模板成功",
-            "data": preview_list
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-# 预览文件接口
-@router.get("/preview/{file_name}")
-def preview_file(file_name: str):
+    preview_list = os.listdir("templates/preview")
+    return APIResponse(code=200, msg="查询文件模板成功", data=preview_list)
+
+@router.get("/preview/{file_name}", responses=make_responses('UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def preview_file(file_name: str):
     """
     获取指定文件的预览内容（PDF），用于浏览器内嵌预览。
 
@@ -166,52 +123,32 @@ def preview_file(file_name: str):
     返回:
         PDF 文件流（FileResponse），用于浏览器内嵌预览
     """
-    try:
-        file_path = os.path.join("templates", "preview", file_name)
-        if not os.path.exists(file_path):
-            raise HTTPException(
-                status_code=404,
-                detail=f"文件 {file_name} 不存在"
-            )
+    file_path = os.path.join("templates", "preview", file_name)
+    if not os.path.exists(file_path):
+        raise AppException(404, "文件不存在")
+    return FileResponse(
+        path=file_path,
+        filename=file_name,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{file_name}"',
+            "X-Content-Type-Options": "nosniff",
+            "X-Download-Options": "noopen",
+        }
+    )
 
-        return FileResponse(
-            path=file_path,
-            filename=file_name,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f'inline; filename="{file_name}"',
-                "X-Content-Type-Options": "nosniff",  # 防止猜测 MIME
-                "X-Download-Options": "noopen",       # 防止触发下载
-            }
-        )
-    except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(
-            status_code=500,
-            detail=f"预览文件时发生错误：{str(e)}"
-        )
-
-
-# 获取文件模板列表接口
-@router.get("/list_templates")
-def get_templates():
+@router.get("/list_templates", response_model=APIResponse, responses=make_responses('UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def get_templates():
     """
     超级管理员维护的模板文件，仅暴露给超级管理员查看使用
 
     TODO 暂未使用，后期需要添加权限控制，限制只有超级管理员可以访问此接口
     """
-    try:
-        word_templates = os.listdir("templates/docx")
-        excel_templates = os.listdir("templates/xlsx")
-        result = {
-            "docx_templates": word_templates,
-            "xlsx_templates": excel_templates
-        }   
-        return {
-            "status": 200,
-            "message": "查询文件模板成功",
-            "data": result
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    word_templates = os.listdir("templates/docx")
+    excel_templates = os.listdir("templates/xlsx")
+    result = {
+        "docx_templates": word_templates,
+        "xlsx_templates": excel_templates
+    }
+    return APIResponse(code=200, msg="查询文件模板成功", data=result)

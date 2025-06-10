@@ -1,8 +1,9 @@
 import json
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from .api_common import AppException, APIResponse, make_responses, auto_handle_exceptions
 from loguru import logger
-from lib.error_response import get_error
+import aiofiles
 
 router = APIRouter(tags=["user"])
 
@@ -10,8 +11,9 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-@router.post("/login")
-def login(request: LoginRequest):
+@router.post("/login", response_model=APIResponse, responses=make_responses('INVALID_AUTHORIZATION', 'USER_CONFIG_FILE_FORMAT_ERROR', 'DATABASE_ERROR', 'UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def login(request: LoginRequest):
     """
     用户登录接口
 
@@ -34,23 +36,12 @@ def login(request: LoginRequest):
         message: 提示信息
         data: {"username": 用户名}
     """
-    try:
-        with open("data/login/user_password.json", "r") as file:
-            valid_users = json.load(file)
-            
-        if request.username in valid_users and valid_users[request.username] == request.password:
-            status, message = 200, "登录成功"
-            data = {"username": request.username}
-            return {"status":status, "message":message,"data":data}
-        else:
-            status, message = get_error("INVALID_AUTHORIZATION")
-            return {"status":status, "message":message,"data":None}
-    except FileNotFoundError:
-        status, message = get_error("DATABASE_ERROR")
-        return {"status":status, "message":message,"data":"服务器没有账密数据"}
-    except json.JSONDecodeError:
-        status, message = get_error("USER_CONFIG_FILE_FORMAT_ERROR")
-        return {"status":status, "message":message,"data":None}
-    except Exception as e:
-        status, message = get_error("UNKNOWN_ERROR")
-        return {"status":status, "message":message,"data":f"登录验证失败：{str(e)}"}
+    async with aiofiles.open("data/login/user_password.json", "r") as file:
+        content = await file.read()
+        valid_users = json.loads(content)
+    if request.username in valid_users and valid_users[request.username] == request.password:
+        return APIResponse(code=200, msg="登录成功", data={"username": request.username})
+    else:
+        logger.warning(f"登录失败: 用户名={request.username}")
+        code, msg = AppException.get_error("INVALID_AUTHORIZATION")
+        raise AppException(code, msg)

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/apiClient';
 import { useUserStore } from '@/lib/useUserStore';
+import { showErrorToast } from '@/lib/utils';
 
 interface TableManagerProps {
   className?: string;
@@ -23,32 +24,19 @@ export default function TableManager({ className }: TableManagerProps) {
   // 获取文件列表
   useEffect(() => {
     const fetchFiles = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiClient.getTablesList();
-        
-        if (response.status === 200 && response.data) {
-          setFiles(response.data);
-          // 默认选择第一个文件
-          if (response.data.length > 0) {
-            setSelectedFile(response.data[0]);
-          }
-        } else {
-          throw new Error(response.message || '获取文件列表失败');
+      setIsLoading(true);
+      const response = await apiClient.getTablesList();
+      if (response.code === 200) {
+        setFiles(response.data);
+        if (response.data.length > 0) {
+          setSelectedFile(response.data[0]);
         }
-      } catch (err) {
-        console.error('获取文件列表失败:', err);
+      } else {
+        showErrorToast(toast, response);
         setError('无法加载文件列表，请刷新页面重试');
-        toast({
-          title: '加载失败',
-          description: '无法加载文件列表',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     };
-
     fetchFiles();
   }, [toast]);
 
@@ -78,29 +66,20 @@ export default function TableManager({ className }: TableManagerProps) {
   const handleAutoFill = async () => {
     if (!selectedFile) return;
     setAutoFilling(true);
-    try {
-      const res = await apiClient.autoFillTable(selectedFile, personId ? [personId] : []);
-      if (res.status === 200) {
-        const url = apiClient.BASE_URL + '/' + res.data.replace(/^\/+/, '');
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = '';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({ title: '自动填表成功', description: '已生成并开始下载填好的表格文件' });
-      } else {
-        throw new Error(res.message || '自动填表失败');
-      }
-    } catch (err: any) {
-      toast({
-        title: '自动填表失败',
-        description: err.message || '请稍后重试',
-        variant: 'destructive',
-      });
-    } finally {
-      setAutoFilling(false);
+    const res = await apiClient.autoFillTable(selectedFile, personId ? [personId] : []);
+    if (res.code === 200) {
+      const url = apiClient.BASE_URL + '/' + res.data.replace(/^\/+/, '');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: '自动填表成功', description: '已生成并开始下载填好的表格文件' });
+    } else {
+      showErrorToast(toast, res);
     }
+    setAutoFilling(false);
   };
 
   // 渲染加载状态
@@ -218,11 +197,7 @@ export default function TableManager({ className }: TableManagerProps) {
               title={`预览 ${selectedFile}`}
               onError={(e) => {
                 console.error('表格预览失败:', e);
-                toast({
-                  title: '预览失败',
-                  description: `无法预览文件 ${selectedFile}`,
-                  variant: 'destructive',
-                });
+                showErrorToast(toast, { code: 500, msg: '预览失败', data: `无法预览文件 ${selectedFile}` });
               }}
             >
               您的浏览器不支持iframe预览，请

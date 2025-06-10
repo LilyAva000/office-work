@@ -1,46 +1,43 @@
 import os
 import json
 import shutil
-from fastapi import APIRouter, HTTPException
-from fastapi import UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form
+from pydantic import BaseModel
+from .api_common import AppException, APIResponse, make_responses, auto_handle_exceptions
 from loguru import logger
-from lib.error_response import get_error, get_error
+import aiofiles
+
 
 router = APIRouter(tags=["info"])
 
-# 示例接口：创建基本信息
-@router.post("/create_person")
-def create_info(id:str,person: dict):
-    """
-    TODO 暂未详细设计和使用
-    """
-    try:
-        status = 200
-        message = "创建成功"
-        data = None
+class PersonInfo(BaseModel):
+    # 可根据实际字段补充
+    person_info: dict
 
-        person_data_path = f"data/persons/{id}.json"
-        with open(person_data_path, "w", encoding="utf-8") as file:
-            json.dump(person, file, ensure_ascii=False)
-        item = {"id": id, "info": person}
-        return {
-            "status": status,
-            "message": message,
-            "data": item
-        }
-    except Exception as e:
-        status,message = get_error("UNKNOWN_ERROR")
-        return {
-            "status": status,
-            "message": message,
-            "data": str(e)
-        }
+class CreatePersonRequest(BaseModel):
+    id: str
+    person: dict
+
+class UpdatePersonRequest(BaseModel):
+    person_info: dict
+
+# 示例接口：创建基本信息
+@router.post("/create_person", response_model=APIResponse, responses=make_responses('UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def create_info(request: CreatePersonRequest):
+    person_data_path = f"data/persons/{request.id}.json"
+    async with aiofiles.open(person_data_path, "w", encoding="utf-8") as file:
+        await file.write(json.dumps(request.person, ensure_ascii=False))
+    item = {"id": request.id, "info": request.person}
+    return APIResponse(code=200, msg="创建成功", data=item)
 
 # 示例接口：获取个人基本信息
-@router.get("/{person_id}")
-def get_info(person_id: str):
+@router.get("/{person_id}", response_model=APIResponse, responses=make_responses('PERSON_NOT_FOUND', 'UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def get_info(person_id: str):
     """
     获取个人基本信息
+    TODO 人信息存储在 data/persons 目录下的 JSON 文件中， 后期完善要换成数据库
 
     参数:
         person_id: 个人唯一标识
@@ -53,34 +50,20 @@ def get_info(person_id: str):
         message: 提示信息
         data: {"person_id": person_id, "info": {个人信息字典}}
     """
-    # TODO 人信息存储在 data/persons 目录下的 JSON 文件中， 后期完善要换成数据库
-    person_data_path = f"data/persons/{person_id}.json" 
+    person_data_path = f"data/persons/{person_id}.json"
     try:
-        status = 200
-        message = "查询成功"
-        data = None
-        try:
-            with open(person_data_path, "r") as file:
-                person_info = json.load(file)
-            data = {"person_id": person_id, "info": person_info}
-        except FileNotFoundError:
-            status,message = get_error("PERSON_NOT_FOUND")
-        return {
-            "status": status,
-            "message": message,
-            "data": data
-        }
-    except Exception as e:
-        status,message = get_error("UNKNOWN_ERROR")
-        return {
-            "status": status,
-            "message": message,
-            "data": str(e)
-        }
+        async with aiofiles.open(person_data_path, "r", encoding="utf-8") as file:
+            content = await file.read()
+            person_info = json.loads(content)
+        data = {"person_id": person_id, "info": person_info}
+    except FileNotFoundError:
+        raise AppException(*AppException.get_error("PERSON_NOT_FOUND"))
+    return APIResponse(code=200, msg="查询成功", data=data)
 
 # 示例接口：更新基本信息
-@router.put("/{person_id}")
-def update_info(person_id: str, person_info: dict):
+@router.put("/{person_id}", response_model=APIResponse, responses=make_responses('UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def update_info(person_id: str, request: UpdatePersonRequest):
     """
     更新用户信息
 
@@ -99,26 +82,11 @@ def update_info(person_id: str, person_info: dict):
         message: 提示信息
         data: {"person_id": person_id, "updated_info": person_info}
     """
-    try:
-        status = 200
-        message = "修改成功"
-        data = None
-        new_person_info = person_info['person_info']
-        person_data_path = f"data/persons/{person_id}.json"
-        with open(person_data_path, "w", encoding="utf-8") as file:
-            json.dump(new_person_info, file, ensure_ascii=False)
-        return {
-            "status": status,
-            "message": message,
-            "data": {"person_id": person_id, "updated_info": person_info}
-        }
-    except Exception as e:
-        status,message = get_error("UNKNOWN_ERROR")
-        return {
-            "status": status,
-            "message": message,
-            "data": str(e)
-        }
+    new_person_info = request.person_info
+    person_data_path = f"data/persons/{person_id}.json"
+    async with aiofiles.open(person_data_path, "w", encoding="utf-8") as file:
+        await file.write(json.dumps(new_person_info, ensure_ascii=False))
+    return APIResponse(code=200, msg="修改成功", data={"person_id": person_id, "updated_info": new_person_info})
     
 # 示例接口：删除基本信息
 # @router.delete("/{item_id}")
@@ -126,8 +94,9 @@ def update_info(person_id: str, person_info: dict):
 #     return {"message": "Item deleted successfully", "item_id": item_id}
 
 # 上传头像接口
-@router.post("/upload_avatar")
-def upload_avatar(person_id: str = Form(...), file: UploadFile = File(...)):
+@router.post("/upload_avatar", response_model=APIResponse, responses=make_responses('PERSON_NOT_FOUND', 'PERSON_INFO_STRUCTURE_ERROR', 'INVALID_IMG_TYPE', 'UNKNOWN_ERROR'))
+@auto_handle_exceptions
+async def upload_avatar(person_id: str = Form(...), file: UploadFile = File(...)):
     """
     上传用户头像并自动更新用户信息中的照片字段。
 
@@ -146,58 +115,29 @@ def upload_avatar(person_id: str = Form(...), file: UploadFile = File(...)):
         data: 头像图片的静态资源路径
     """
     logger.info(f"上传头像请求: person_id={person_id}, file={file.filename}")
-    
-    try:
-        # 1. 验证用户信息文件是否存在
-        json_path = os.path.join("data", "persons", f"{person_id}.json")
-        if not os.path.exists(json_path):
-            status, message = get_error("PERSON_NOT_FOUND")
-            return {"status": status, "message": message, "data": None}
-
-        # 2. 读取并验证用户信息结构
-        with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        
-        if not ("基本信息" in data and "个人信息" in data["基本信息"]):
-            status, message = get_error("PERSON_INFO_STRUCTURE_ERROR")
-            return {"status": status, "message": message, "data": None}
-
-        # 3. 创建用户头像目录
-        user_img_dir = os.path.join("static", "img", person_id)
-        os.makedirs(user_img_dir, exist_ok=True)
-
-        # 4. 生成并保存头像文件
-        ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in ['.jpg', '.jpeg', '.png', '.gif']:
-            status, message = get_error("INVALID_IMG_TYPE")
-            return {"status": status, "message": message, "data": None}
-
-        avatar_filename = f"{person_id}-avatar{ext}"
-        avatar_path = os.path.join(user_img_dir, avatar_filename)
-
-        # 5. 保存图片文件
-        with open(avatar_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # 6. 更新用户信息中的照片字段
-        avatar_url = f"static/img/{person_id}/{avatar_filename}"
-        data["基本信息"]["个人信息"]["照片"] = avatar_url
-
-        # 7. 保存更新后的用户信息
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
-        return {
-            "status": 200,
-            "message": "头像上传并信息更新成功",
-            "data": avatar_url
-        }
-
-    except Exception as e:
-        logger.error(f"头像上传失败: {str(e)}")
-        status, message = get_error("UNKNOWN_ERROR")
-        return {
-            "status": status,
-            "message": message,
-            "data": str(e)
-        }
+    json_path = os.path.join("data", "persons", f"{person_id}.json")
+    if not os.path.exists(json_path):
+        code, msg = AppException.get_error("PERSON_NOT_FOUND")
+        raise AppException(code, msg)
+    async with aiofiles.open(json_path, "r", encoding="utf-8") as f:
+        content = await f.read()
+        data = json.loads(content)
+    if not ("基本信息" in data and "个人信息" in data["基本信息"]):
+        code, msg = AppException.get_error("PERSON_INFO_STRUCTURE_ERROR")
+        raise AppException(code, msg)
+    user_img_dir = os.path.join("static", "img", person_id)
+    os.makedirs(user_img_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ['.jpg', '.jpeg', '.png', '.gif']:
+        code, msg = AppException.get_error("INVALID_IMG_TYPE")
+        raise AppException(code, msg)
+    avatar_filename = f"{person_id}-avatar{ext}"
+    avatar_path = os.path.join(user_img_dir, avatar_filename)
+    async with aiofiles.open(avatar_path, "wb") as buffer:
+        content = await file.read()
+        await buffer.write(content)
+    avatar_url = f"static/img/{person_id}/{avatar_filename}"
+    data["基本信息"]["个人信息"]["照片"] = avatar_url
+    async with aiofiles.open(json_path, "w", encoding="utf-8") as f:
+        await f.write(json.dumps(data, ensure_ascii=False, indent=4))
+    return APIResponse(code=200, msg="头像上传并信息更新成功", data=avatar_url)

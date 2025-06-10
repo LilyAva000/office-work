@@ -104,30 +104,24 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   // 保存表单数据
   const handleSave = async () => {
     setIsSaving(true);
+    const updatedUserInfo = formData;
     
-    try {
-      const userInfo = useUserStore.getState().userInfo;
-      const updatedUserInfo = formData;
-      if (!personId) {
-        throw new Error('用户名不存在，请重新登录');
-      }
-      await apiClient.updateUserInfo(personId, updatedUserInfo);
+    const result = await apiClient.updateUserInfo(personId, updatedUserInfo);
+    if (result.code === 200) {
       setUserInfo(updatedUserInfo);
       toast({
         title: '保存成功',
         description: '个人资料已更新',
       });
-    } catch (error) {
-      console.error('保存失败:', error);
+    } else {
       toast({
+        title: `错误码: ${result.code}`,
+        description: `${result.msg}${result.data ? '：' + result.data : ''}`,
         variant: 'destructive',
-        title: '保存失败',
-        description: error instanceof Error ? error.message : '无法保存个人资料，请稍后重试',
       });
-    } finally {
-      setIsSaving(false);
-      setIsEditing(false);
     }
+    setIsSaving(false);
+    setIsEditing(false);
   };
 
   // 头像上传处理（加avatarKey，避免文件新旧头像重名而不刷新显示）
@@ -135,30 +129,28 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     setAvatarUploading(true);
-    try {
-      if (!personId) throw new Error('上传头像用户person_id不存在');
-      const result = await apiClient.uploadAvatar(personId, file);
-      if (result.status === 200) {
-        setFormData((prev: any) => ({
-          ...prev,
-          avatarKey: Date.now(),
-          基本信息: {
-            ...prev.基本信息,
-            个人信息: {
-              ...prev.基本信息.个人信息,
-              照片: result.data,
-            },
+    const result = await apiClient.uploadAvatar(personId, file);
+    if (result.code === 200) {
+      setFormData((prev: any) => ({
+        ...prev,
+        avatarKey: Date.now(),
+        基本信息: {
+          ...prev.基本信息,
+          个人信息: {
+            ...prev.基本信息.个人信息,
+            照片: result.data,
           },
-        }));
-        toast({ title: '头像上传成功', description: '头像已更新' });
-      } else {
-        toast({ variant: 'destructive', title: '头像上传失败', description: result.detail || '头像上传失败' });
-      }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: '头像上传失败', description: error.message || '请稍后重试' });
-    } finally {
-      setAvatarUploading(false);
+        },
+      }));
+      toast({ title: '头像上传成功', description: '头像已更新' });
+    } else {
+      toast({
+        title: `错误码: ${result.code}`,
+        description: `${result.msg}${result.data ? '：' + result.data : ''}`,
+        variant: 'destructive',
+      });
     }
+    setAvatarUploading(false);
   };
 
   // 渲染基本信息表单

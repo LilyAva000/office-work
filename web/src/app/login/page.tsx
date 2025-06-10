@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/apiClient';
 import { useUserStore } from '@/lib/useUserStore';
+import { showErrorToast } from '@/lib/utils';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -34,51 +35,31 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    try {
-      // 调用登录API
-      const loginResponse = await apiClient.login(username, password);
-      
-      // 验证登录状态
-      if (loginResponse && loginResponse.status === 200) {
-        // 获取用户信息
-        const userInfo = await apiClient.getUserInfo(username);
-        
-        console.log('用户信息:', userInfo); // 打印用户信息以确认是否正确获取
-        // 确保userInfo包含必要的数据
-        if (!userInfo || !userInfo.info) {
-          throw new Error('获取用户信息失败，请重试');
-        }
-        
-        // 存储用户信息到全局状态
+    // 调用登录API
+    const loginResponse = await apiClient.login(username, password);
+    if (loginResponse.code === 200) {
+      // 获取用户信息
+      const userInfoResp = await apiClient.getUserInfo(username);
+      if (userInfoResp.code === 200) {
         initUser({
-          userInfo: userInfo.info,
-          personId: userInfo.person_id,
+          userInfo: userInfoResp.data.info,
+          personId: userInfoResp.data.person_id,
           isLoggedIn: true
         });
-        
         toast({
           title: '登录成功',
           description: `欢迎回来，${username}，正在跳转到个人档案页面...`,
         });
-        
-        // 跳转到个人档案页面
         setTimeout(() => {
           router.push('/profile');
         }, 1000);
       } else {
-        throw new Error('登录失败: 用户名或密码错误');
+        showErrorToast(toast, userInfoResp);
       }
-    } catch (error) {
-      console.error('登录失败:', error);
-      toast({
-        variant: 'destructive',
-        title: '登录失败',
-        description: '用户名或密码错误，请重试。',
-      });
-    } finally {
-      setIsLoading(false);
+    } else {
+      showErrorToast(toast, loginResponse);
     }
+    setIsLoading(false);
   };
 
   return (

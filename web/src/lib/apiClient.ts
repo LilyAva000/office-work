@@ -19,24 +19,13 @@ export const apiClient = {
                 password
             }),
         });
-        if (!response.ok) {
-            throw new Error(`登录失败: ${response.status}`);
-        }
         return await response.json();
     },
 
     // 获取用户信息
     getUserInfo: async (username: string): Promise<any> => {
         const response = await fetch(`${API_BASE_URL}/info/${username}`);
-        if (!response.ok) {
-            throw new Error(`获取用户信息失败: ${response.status}`);
-        }
-        const res = await response.json();
-        if (res.status === 200) {
-            return res.data;
-        } else {
-            throw new Error(res.message || '获取用户信息失败');
-        }
+        return await response.json();
     },
 
     // 更新用户信息
@@ -50,9 +39,6 @@ export const apiClient = {
                 person_info: userInfo
             }),
         });
-        if (!response.ok) {
-            throw new Error(`更新用户信息失败: ${response.status}`);
-        }
         return await response.json();
     },
 
@@ -65,22 +51,12 @@ export const apiClient = {
             method: 'POST',
             body: formData,
         });
-        const result = await response.json();
-
-        if (result.status === 200) {
-            return result;
-        } else {
-            console.log('uploadAvatar err');
-            throw new Error(result.data || '头像上传失败');
-        }
+        return await response.json();
     },
 
     // 获取文件列表
     getTablesList: async (): Promise<any> => {
         const response = await fetch(`${API_BASE_URL}/table/list_preview`);
-        if (!response.ok) {
-            throw new Error(`获取文件列表失败: ${response.status}`);
-        }
         return await response.json();
     },
 
@@ -91,8 +67,6 @@ export const apiClient = {
 
     // 自动填表
     autoFillTable: async (filename: string, personIds: string[] = []): Promise<any> => {
-        // console.log('开始自动填表1:', filename);
-        // console.log('开始自动填表2:', personIds);
         const response = await fetch(`${API_BASE_URL}/table/autofill`, {
             method: 'POST',
             headers: {
@@ -100,9 +74,6 @@ export const apiClient = {
             },
             body: JSON.stringify({ table_name: filename, persons: personIds }),
         });
-        if (!response.ok) {
-            throw new Error(`自动填表失败: ${response.status}`);
-        }
         return await response.json();
     },
 
