@@ -83,7 +83,7 @@ python main.py
     "data": { ... }
   }
   ```
-- 错误码与错误信息集中配置于 `config/error_config.yaml`，便于维护和前后端联调。
+- 错误码与错误信息集中配置于 `config/error_config.yaml`，便于维护和前后端联调，状态码可参考[HTTP 响应状态码](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Reference/Status)。
 - 全局异常处理见 `app/api_common.py`，保证所有异常均有结构化响应。
 - 主要业务接口见 `app/user_handler.py`、`app/table_handler.py`、`app/metadata_handler.py`。
 
